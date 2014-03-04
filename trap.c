@@ -12,7 +12,9 @@
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
+struct spinlock keyslock;
 uint ticks;
+uint keys;
 
 void
 tvinit(void)
@@ -24,6 +26,7 @@ tvinit(void)
   SETGATE(idt[T_SYSCALL], 1, SEG_KCODE<<3, vectors[T_SYSCALL], DPL_USER);
   
   initlock(&tickslock, "time");
+  initlock(&keyslock, "keys");
 }
 
 void
@@ -64,6 +67,12 @@ trap(struct trapframe *tf)
     // Bochs generates spurious IDE1 interrupts.
     break;
   case T_IRQ0 + IRQ_KBD:
+    if(cpu->id == 0){
+      acquire(&keyslock);
+      keys++;
+      wakeup(&keys);
+      release(&keyslock);
+    }
     kbdintr();
     lapiceoi();
     break;

@@ -88,3 +88,16 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+//
+// return how many key press interrupts have occurred
+// since start.
+int
+sys_icount(void)
+{
+  uint xkeys;
+
+  acquire(&keyslock);
+  xkeys = keys;
+  release(&keyslock);
+  return xkeys;
+}
