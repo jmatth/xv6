@@ -88,3 +88,10 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// FIXME: implement the actual system call...
+int
+sys_signal(void*)
+{
+    return 0;
+}
