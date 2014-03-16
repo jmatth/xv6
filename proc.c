@@ -34,6 +34,7 @@ pinit(void)
 static struct proc*
 allocproc(void)
 {
+  int i;
   struct proc *p;
   char *sp;
 
@@ -48,6 +49,12 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   release(&ptable.lock);
+
+  // Initialize signal handlers.
+  for (i = 0; i < NSIGS; ++i)
+  {
+      p->handlers[i] = (sighandler_t)-1;
+  }
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
