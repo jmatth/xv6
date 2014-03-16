@@ -1,3 +1,5 @@
+#include "signal.h"
+
 struct stat;
 
 // system calls
@@ -22,7 +24,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int signal(void);
+int signal(int, sighandler_t);
 
 // ulib.c
 int stat(char*, struct stat*);
@@ -37,3 +39,6 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+#define signal(x, y) signal(-1, &__tramp); \
+                     signal(x, y)

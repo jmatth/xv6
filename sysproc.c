@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "signal.h"
 
 int
 sys_fork(void)
@@ -89,9 +90,27 @@ sys_uptime(void)
   return xticks;
 }
 
-// FIXME: implement the actual system call...
-int
-sys_signal(void*)
+sighandler_t
+sys_signal(void)
 {
-    return 0;
+    int signo;
+    sighandler_t handler;
+    sighandler_t old;
+
+    argint(0, &signo);
+    argint(1, (int*)&handler);
+
+    if (signo < 0)
+    {
+      proc->tramp = handler;
+      return (sighandler_t)0;
+    }
+
+    if (signo > NSIGS-1)
+      return (sighandler_t)-1;
+
+    old = proc->handlers[signo];
+    proc->handlers[signo] = handler;
+
+    return old;
 }

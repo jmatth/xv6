@@ -7,6 +7,7 @@
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
+#include "signal.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -30,6 +31,29 @@ void
 idtinit(void)
 {
   lidt(idt, sizeof(idt));
+}
+
+void
+sigrecieve(int sig)
+{
+  PUSH(eip);
+  PUSH(ebp);
+  proc->tf->ebp = proc->tf->esp;
+
+  // Save all the registers
+  PUSH(edi);
+  PUSH(esi);
+  PUSH(ebp);
+  PUSH(ebx);
+  PUSH(edx);
+  PUSH(ecx);
+  PUSH(eax);
+
+  proc->tf->esp -= sizeof(uint);
+  *(uint*)(proc->tf->esp) = (uint)proc->tramp;
+
+  proc->tf->eip = (uint)proc->handlers[sig];
+  //FIXME maybe deliver the signal number
 }
 
 //PAGEBREAK: 41
@@ -76,6 +100,10 @@ trap(struct trapframe *tf)
     cprintf("cpu%d: spurious interrupt at %x:%x\n",
             cpu->id, tf->cs, tf->eip);
     lapiceoi();
+    break;
+
+  case T_PGFLT:
+    sigrecieve(SIGSEGV);
     break;
    
   //PAGEBREAK: 13
