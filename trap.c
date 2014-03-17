@@ -36,24 +36,14 @@ idtinit(void)
 void
 sigrecieve(int sig)
 {
-  PUSH(eip);
-  PUSH(ebp);
-  proc->tf->ebp = proc->tf->esp;
+  // Push the current code location and appropriate handler location onto the
+  // process's stack.
+  // I'll make my own calling convention, with blackjack and hookers...
+  PUSH(proc->tf->eip);
+  PUSH((uint)proc->handlers[sig]);
 
-  // Save all the registers
-  PUSH(edi);
-  PUSH(esi);
-  PUSH(ebp);
-  PUSH(ebx);
-  PUSH(edx);
-  PUSH(ecx);
-  PUSH(eax);
-
-  proc->tf->esp -= sizeof(uint);
-  *(uint*)(proc->tf->esp) = (uint)proc->tramp;
-
-  proc->tf->eip = (uint)proc->handlers[sig];
-  //FIXME maybe deliver the signal number
+  // Have the process run the trampoline next time it is scheduled.
+  proc->tf->eip = (uint)proc->tramp;
 }
 
 //PAGEBREAK: 41
