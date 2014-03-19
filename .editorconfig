@@ -1,0 +1,19 @@
+; EditorConfig is awesome: http://EditorConfig.org
+
+; top-most EditorConfig file
+root = true
+
+[*]
+; 4 space indentation
+indent_style = space
+indent_size = 2
+
+; unix-style newlines with a newline ending every file
+end_of_line = lf
+insert_final_newline = true
+
+; remove any whitespace preceding a newline
+trim_trailing_whitespace = false
+
+; make syntastic happy
+vim_command = let b:syntastic_c_cflags = '-m32'| let g:airline#extensions#whitespace#checks = [ 'indent' ]
