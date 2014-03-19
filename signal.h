@@ -1,9 +1,10 @@
-#ifndef _SIGNAL_
-#define _SIGNAL_ 1
+#ifndef __SIGNAL__
+#define __SIGNAL__ 1
+
+// Number of signals we have.
 #define NSIGS 1
 
-// map trap numbers to signals.
+// Define each signal.
 #define SIGSEGV 0
 
-extern void __tramp(int);
 #endif

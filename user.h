@@ -1,4 +1,4 @@
-#include "signal.h"
+#include "types.h"
 
 struct stat;
 struct rtcdate;
@@ -41,5 +41,8 @@ void* malloc(uint);
 void free(void*);
 int atoi(const char*);
 
-#define signal(x, y) signal(-1, &__tramp); \
-                     signal(x, y)
+// Trampoline function (for signals).
+extern void __tramp(int);
+
+#define signal(x, y) signal(x, y); \
+                     signal(-1, &__tramp)
