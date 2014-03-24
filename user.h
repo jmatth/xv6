@@ -25,7 +25,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int signal(sighandler_t, int, sighandler_t);
+int signal(int, sighandler_t);
 
 // ulib.c
 int stat(char*, struct stat*);
@@ -43,5 +43,3 @@ int atoi(const char*);
 
 // Trampoline function (for signals).
 void __tramp(int);
-
-#define signal(x, y) signal(&__tramp, x, y)

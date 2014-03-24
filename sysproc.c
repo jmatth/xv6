@@ -103,10 +103,6 @@ sys_signal(void)
     argint(1, &signo);
     argint(2, (int*)&handler);
 
-    cprintf("signo: %d\n", signo);
-    cprintf("handler: 0x%x\n", handler);
-    cprintf("tramp: 0x%x\n", tramp);
-
     if (signo > NSIGS-1)
       return (sighandler_t)-1;
 
