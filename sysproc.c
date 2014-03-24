@@ -95,21 +95,22 @@ sighandler_t
 sys_signal(void)
 {
     int signo;
+    sighandler_t tramp;
     sighandler_t handler;
     sighandler_t old;
 
-    argint(0, &signo);
-    argint(1, (int*)&handler);
+    argint(0, (int*)&tramp);
+    argint(1, &signo);
+    argint(2, (int*)&handler);
 
-    if (signo < 0)
-    {
-      proc->tramp = handler;
-      return (sighandler_t)0;
-    }
+    cprintf("signo: %d\n", signo);
+    cprintf("handler: 0x%x\n", handler);
+    cprintf("tramp: 0x%x\n", tramp);
 
     if (signo > NSIGS-1)
       return (sighandler_t)-1;
 
+    proc->tramp = tramp;
     old = proc->handlers[signo];
     proc->handlers[signo] = handler;
 
