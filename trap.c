@@ -34,16 +34,16 @@ idtinit(void)
 }
 
 void
-sigrecieve(int sig)
+sigrecieve(int sig, struct trapframe *tf)
 {
   // Push the current code location and appropriate handler location onto the
   // process's stack.
   // I'll make my own calling convention, with blackjack and hookers...
-  PUSH(proc->tf->eip);
+  PUSH(tf->eip);
   PUSH((uint)proc->handlers[sig]);
 
   // Have the process run the trampoline next time it is scheduled.
-  proc->tf->eip = (uint)proc->tramp;
+  tf->eip = (uint)proc->tramp;
 }
 
 //PAGEBREAK: 41
@@ -93,9 +93,9 @@ trap(struct trapframe *tf)
     break;
 
   case T_PGFLT:
-    sigrecieve(SIGSEGV);
+    sigrecieve(SIGSEGV, tf);
     break;
-   
+
   //PAGEBREAK: 13
   default:
     if(proc == 0 || (tf->cs&3) == 0){
