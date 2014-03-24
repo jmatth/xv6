@@ -29,7 +29,6 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
-SYSCALL(signal)
 
 .globl __tramp
 __tramp:
@@ -56,3 +55,15 @@ __tramp:
   # All done.
   ret
 
+.globl signal
+signal:
+  # Inject the address of the trampoline into the arguments for sys_signal.
+  popl %eax
+  pushl $__tramp
+  pushl %eax
+
+  movl $SYS_signal, %eax
+  int $T_SYSCALL
+
+  # Remove the address of the trampoline when returning.
+  ret $4
