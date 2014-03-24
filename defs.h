@@ -183,5 +183,5 @@ void            clearpteu(pde_t *pgdir, char *uva);
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
 // Easy manipulation of the proc struct
-#define PUSH(val) proc->tf->esp -= sizeof(uint); \
-                  *(uint*)(proc->tf->esp) = val
+#define PUSH(val) tf->esp -= sizeof(uint); \
+                  *(uint*)(tf->esp) = val
