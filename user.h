@@ -1,3 +1,6 @@
+#ifndef __USERH__
+#define __USERH__ 1
+
 #include "types.h"
 
 struct stat;
@@ -52,3 +55,5 @@ int atoi(const char*);
 
 // Trampoline function (for signals).
 void __tramp(int);
+
+#endif

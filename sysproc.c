@@ -31,8 +31,9 @@ sys_clone(void)
 int
 sys_join(void)
 {
-  //FIXME
-  return 0;
+  void **stack;
+  argint(0, (int*)&stack);
+  return join(stack);
 }
 
 int

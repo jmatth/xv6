@@ -82,8 +82,8 @@ struct proc {
   sighandler_t tramp;            // Address of trampoline
   char name[16];                 // Process name (debugging)
   unsigned char isThread;        // Indicate the proc is a thread
+  void *stackTop;                // Top of the stack, only used in threads
   struct mutex *mutex_table;     // Table of mutexes for the process
-  struct spinlock *mlock;
 };
 
 // Process memory is laid out contiguously, low addresses first:

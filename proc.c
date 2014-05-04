@@ -53,6 +53,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->isThread = 0;
+  p->stackTop = 0;
   release(&ptable.lock);
 
   // Initialize signal handlers.
@@ -102,6 +103,49 @@ found:
   p->context->eip = (uint)forkret;
 
   return p;
+}
+
+// Wait for a child thread to exit.
+int
+join(void** stack)
+{
+  struct proc *p;
+  int havekids, pid;
+
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for zombie children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != proc || p->isThread != 1)
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        /* freevm(p->pgdir); */
+        p->state = UNUSED;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        *stack = p->stackTop;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || proc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+  }
 }
 
 //PAGEBREAK: 32
@@ -234,6 +278,7 @@ clone(void(*func)(void*), void *arg, void *stack)
   np->tf->esp -= 4;
   *(void**)(np->tf->esp) = arg;
   np->tf->eip = (uint)func;
+  np->stackTop = stack;
 
   for(i = 0; i < NOFILE; i++)
     if(proc->ofile[i])
@@ -304,7 +349,7 @@ wait(void)
     // Scan through table looking for zombie children.
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != proc)
+      if(p->parent != proc || p->isThread != 0)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
