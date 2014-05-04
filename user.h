@@ -27,6 +27,8 @@ int sleep(int);
 int uptime(void);
 int signal(int, sighandler_t);
 int alarm(int);
+int clone(void(*)(void*), void*, void*);
+int join(void**);
 
 // ulib.c
 int stat(char*, struct stat*);

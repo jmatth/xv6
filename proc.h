@@ -70,6 +70,7 @@ struct proc {
   sighandler_t handlers[NSIGS];  // Signal handlers
   sighandler_t tramp;            // Address of trampoline
   char name[16];                 // Process name (debugging)
+  unsigned char isThread;        // Indicate the proc is a thread
 };
 
 // Process memory is laid out contiguously, low addresses first:

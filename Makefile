@@ -178,6 +178,7 @@ UPROGS=\
 	_test_sigsegv\
 	_signal_cost\
 	_test_sigalrm\
+	_threadtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

@@ -30,6 +30,8 @@ SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(alarm)
+SYSCALL(clone)
+SYSCALL(join)
 
 .globl __tramp
 __tramp:
