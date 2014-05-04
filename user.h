@@ -1,3 +1,8 @@
+#ifndef __USERH__
+#define __USERH__ 1
+
+#include "types.h"
+
 struct stat;
 
 // system calls
@@ -44,3 +49,5 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+#endif

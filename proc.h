@@ -77,6 +77,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   unsigned char isThread;      // Indicate the proc is a thread
+  void *stackTop;              // Top of the stack, only used in threads
   struct mutex *mutex_table;   // Table of mutexes for the process
   struct spinlock *mlock;
 };
