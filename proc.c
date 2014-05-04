@@ -47,6 +47,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->isThread = 0;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -55,11 +56,11 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
-  
+
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-  
+
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -154,6 +155,53 @@ fork(void)
       np->ofile[i] = filedup(proc->ofile[i]);
   np->cwd = idup(proc->cwd);
  
+  pid = np->pid;
+  np->state = RUNNABLE;
+  safestrcpy(np->name, proc->name, sizeof(proc->name));
+  return pid;
+}
+
+// Create a new thread
+int
+clone(void(*func)(void*), void *arg, void *stack)
+{
+  int i, pid;
+  struct proc *np;
+
+  // Allocate process.
+  if((np = allocproc()) == 0)
+    return -1;
+
+  // Copy process state from p.
+  /*
+   * if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
+   *   kfree(np->kstack);
+   *   np->kstack = 0;
+   *   np->state = UNUSED;
+   *   return -1;
+   * }
+   */
+  np->sz = proc->sz;
+  np->parent = proc;
+  np->isThread = 1;
+  *np->tf = *proc->tf;
+
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
+
+  // thread stuff
+  np->pgdir = proc->pgdir;
+  np->tf->ebp = (uint)stack + 4096;
+  np->tf->esp = np->tf->ebp;
+  np->tf->esp -= 4;
+  *(void**)(np->tf->esp) = arg;
+  np->tf->eip = (uint)func;
+
+  for(i = 0; i < NOFILE; i++)
+    if(proc->ofile[i])
+      np->ofile[i] = filedup(proc->ofile[i]);
+  np->cwd = idup(proc->cwd);
+
   pid = np->pid;
   np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name));

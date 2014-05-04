@@ -13,6 +13,27 @@ sys_fork(void)
 }
 
 int
+sys_clone(void)
+{
+  void (*func)(void*);
+  void *arg;
+  void *stack;
+
+  argint(0, (int*)&func);
+  argint(1, (int*)&arg);
+  argint(2, (int*)&stack);
+
+  return clone(func, arg, stack);
+}
+
+int
+sys_join(void)
+{
+  //FIXME
+  return 0;
+}
+
+int
 sys_exit(void)
 {
   exit();
