@@ -76,7 +76,7 @@ void mypthread_exit(void *retval)
 
 int mypthread_yield()
 {
-  //FIXME maybe
+  yield();
   return 0;
 }
 

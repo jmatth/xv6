@@ -109,6 +109,7 @@ void            exit(void);
 int             fork(void);
 int             clone(void(*)(void*), void*, void*);
 int             join(void**);
+void            yield(void);
 
 int             mutex_init(void);
 int             mutex_trylock(int);

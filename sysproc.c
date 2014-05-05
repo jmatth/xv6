@@ -36,6 +36,12 @@ sys_join(void)
   return join(stack);
 }
 
+int sys_yield(void)
+{
+  yield();
+  return 0;
+}
+
 int
 sys_mutex_init(void)
 {

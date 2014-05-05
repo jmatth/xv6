@@ -32,6 +32,7 @@ int signal(int, sighandler_t);
 int alarm(int);
 int clone(void(*)(void*), void*, void*);
 int join(void**);
+void yield(void);
 
 int mutex_init();
 int mutex_trylock(int);
