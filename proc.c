@@ -582,6 +582,7 @@ mutex_init()
 {
   int i;
 
+  acquire(proc->mlock);
   for (i = 0; i < numMutexes; ++i)
   {
     if (proc->mutex_table[i].used == 0)
@@ -594,6 +595,7 @@ mutex_init()
     }
   }
 
+  release(proc->mlock);
   return -1;
 }
 
@@ -640,7 +642,7 @@ int mutex_unlock(int md)
 
   acquire(proc->mlock);
 
-  if (!proc->mutex_table[md].locked || proc->mutex_table[md].locked_by != proc->pid);
+  if (!proc->mutex_table[md].locked || proc->mutex_table[md].locked_by != proc->pid)
   {
     release(proc->mlock);
     return 1;
