@@ -115,3 +115,29 @@ foundjoinnode:
   mutex_unlock(libMutex);
   return 0;
 }
+
+int mypthread_mutex_init(mypthread_mutex_t *mutex, const mypthread_mutex_attr_t *attr)
+{
+  *mutex = mutex_init();
+  return *mutex;
+}
+
+int mypthread_mutex_lock(mypthread_mutex_t *mutex)
+{
+  return mutex_lock(*mutex);
+}
+
+int mypthread_mutex_trylock(mypthread_mutex_t *mutex)
+{
+  return mutex_trylock(*mutex);
+}
+
+int mypthread_mutex_unlock(mypthread_mutex_t *mutex)
+{
+  return mutex_unlock(*mutex);
+}
+
+int mypthread_mutex_destroy(mypthread_mutex_t *mutex)
+{
+  return mutex_destroy(*mutex);
+}
