@@ -35,12 +35,11 @@ pinit(void)
 // state required to run in the kernel.
 // Otherwise return 0.
 static struct proc*
-allocproc(int makingThread)
+allocproc()
 {
   int i;
   struct proc *p;
   char *sp;
-  int i;
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -72,26 +71,8 @@ found:
   }
   sp = p->kstack + KSTACKSIZE;
 
-  if (!makingThread)
-  {
-    if((p->mlock = (void*)kalloc()) == 0)
-    {
-      kfree(p->kstack);
-      p->state = UNUSED;
-      return 0;
-    }
-    p->mutex_table = (struct mutex*)(p->mlock + sizeof(struct spinlock));
-    for (i = 0; i < PGSIZE / sizeof(struct mutex); ++i)
-    {
-      p->mutex_table[i].used = 0;
-    }
-    initlock(p->mlock, "mtablelock");
-  }
-  else
-  {
-    p->mutex_table = 0;
-    p->mlock = 0;
-  }
+  p->mutex_table = 0;
+  p->mlock = 0;
 
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
@@ -160,8 +141,8 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
-  p = allocproc(0);
+
+  p = allocproc();
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
@@ -188,17 +169,26 @@ int
 growproc(int n)
 {
   uint sz;
-  
+
+  acquire(&ptable.lock);
+
   sz = proc->sz;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
+    {
+      release(&ptable.lock);
       return -1;
+    }
   } else if(n < 0){
     if((sz = deallocuvm(proc->pgdir, sz, sz + n)) == 0)
+    {
+      release(&ptable.lock);
       return -1;
+    }
   }
   proc->sz = sz;
   switchuvm(proc);
+  release(&ptable.lock);
   return 0;
 }
 
@@ -212,13 +202,12 @@ fork(void)
   struct proc *np;
 
   // Allocate process.
-  if((np = allocproc(0)) == 0)
+  if((np = allocproc()) == 0)
     return -1;
 
   // Copy process state from p.
   if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
     kfree(np->kstack);
-    kfree((char*)np->mlock);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
@@ -255,7 +244,7 @@ clone(void(*func)(void*), void *arg, void *stack)
   struct proc *np;
 
   // Allocate process.
-  if((np = allocproc(1)) == 0)
+  if((np = allocproc()) == 0)
     return -1;
 
   // Copy process state from p.
@@ -272,6 +261,7 @@ clone(void(*func)(void*), void *arg, void *stack)
   np->isThread = 1;
   np->mutex_table = proc->mutex_table;
   np->mlock = proc->mlock;
+  np->pgdir = proc->pgdir;
   *np->tf = *proc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -362,7 +352,8 @@ wait(void)
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
-        kfree((char*)p->mlock);
+        if(p->mlock != 0)
+          kfree((char*)p->mlock);
         p->kstack = 0;
         freevm(p->pgdir);
         p->state = UNUSED;
@@ -600,6 +591,40 @@ int
 mutex_init()
 {
   int i;
+  struct proc *parent;
+  struct proc *p;
+
+  acquire(&ptable.lock);
+
+  if (proc->mlock == 0)
+  {
+    if (proc->isThread)
+      parent = proc->parent;
+    else
+      parent = proc;
+
+    if((parent->mlock = (void*)kalloc()) == 0)
+    {
+      release(&ptable.lock);
+      return -1;
+    }
+
+    initlock(parent->mlock, "mtablelock");
+
+    parent->mutex_table = (struct mutex*)(parent->mlock + sizeof(struct spinlock));
+
+    for (i = 0; i < numMutexes; ++i)
+      parent->mutex_table[i].used = 0;
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+      if(p->parent == parent)
+      {
+        p->mlock = parent->mlock;
+        p->mutex_table = parent->mutex_table;
+      }
+  }
+
+  release(&ptable.lock);
 
   acquire(proc->mlock);
   for (i = 0; i < numMutexes; ++i)
