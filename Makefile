@@ -179,6 +179,8 @@ UPROGS=\
 	_signal_cost\
 	_test_sigalrm\
 	_threadtest\
+	_mutextest\
+	_mypthreadtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
