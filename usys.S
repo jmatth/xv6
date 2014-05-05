@@ -32,6 +32,11 @@ SYSCALL(uptime)
 SYSCALL(alarm)
 SYSCALL(clone)
 SYSCALL(join)
+SYSCALL(mutex_init)
+SYSCALL(mutex_trylock)
+SYSCALL(mutex_lock)
+SYSCALL(mutex_unlock)
+SYSCALL(mutex_destroy)
 
 .globl __tramp
 __tramp:

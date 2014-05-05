@@ -24,3 +24,8 @@
 #define SYS_alarm  23
 #define SYS_clone  24
 #define SYS_join   25
+#define SYS_mutex_init    26
+#define SYS_mutex_trylock 27
+#define SYS_mutex_lock    28
+#define SYS_mutex_unlock  29
+#define SYS_mutex_destroy 30

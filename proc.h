@@ -1,6 +1,11 @@
 #include "signal.h"
+#include "spinlock.h"
+
 // Segments in proc->gdt.
 #define NSEGS     7
+
+// Number of mutexes in the table
+#define PGSIZE 4096
 
 // Per-CPU state
 struct cpu {
@@ -52,6 +57,12 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+struct mutex {
+  unsigned char used;
+  unsigned char locked;
+  volatile int locked_by;
+};
+
 // Per-process state
 struct proc {
   uint sz;                       // Size of process memory (bytes)
@@ -71,6 +82,8 @@ struct proc {
   sighandler_t tramp;            // Address of trampoline
   char name[16];                 // Process name (debugging)
   unsigned char isThread;        // Indicate the proc is a thread
+  struct mutex *mutex_table;     // Table of mutexes for the process
+  struct spinlock *mlock;
 };
 
 // Process memory is laid out contiguously, low addresses first:

@@ -30,6 +30,12 @@ int alarm(int);
 int clone(void(*)(void*), void*, void*);
 int join(void**);
 
+int mutex_init();
+int mutex_trylock(int);
+int mutex_lock(int);
+int mutex_unlock(int);
+int mutex_destroy(int);
+
 // ulib.c
 int stat(char*, struct stat*);
 char* strcpy(char*, char*);
