@@ -35,7 +35,7 @@ pinit(void)
 // state required to run in the kernel.
 // Otherwise return 0.
 static struct proc*
-allocproc(char isThread)
+allocproc(int makingThread)
 {
   int i;
   struct proc *p;
@@ -72,9 +72,14 @@ found:
   }
   sp = p->kstack + KSTACKSIZE;
 
-  if (isThread)
+  if (!makingThread)
   {
-    p->mlock = (void*)kalloc();
+    if((p->mlock = (void*)kalloc()) == 0)
+    {
+      kfree(p->kstack);
+      p->state = UNUSED;
+      return 0;
+    }
     p->mutex_table = (struct mutex*)(p->mlock + sizeof(struct spinlock));
     for (i = 0; i < PGSIZE / sizeof(struct mutex); ++i)
     {
@@ -213,6 +218,7 @@ fork(void)
   // Copy process state from p.
   if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
     kfree(np->kstack);
+    kfree((char*)np->mlock);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
@@ -356,6 +362,7 @@ wait(void)
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
+        kfree((char*)p->mlock);
         p->kstack = 0;
         freevm(p->pgdir);
         p->state = UNUSED;
