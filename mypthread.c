@@ -88,7 +88,6 @@ int mypthread_join(mypthread_t thread, void **retval)
 
   mutex_lock(libMutex);
 
-
   node = getNode(thread);
   if (node != 0)
     goto foundjoinnode;
@@ -96,9 +95,11 @@ int mypthread_join(mypthread_t thread, void **retval)
   mutex_unlock(libMutex);
   while((joinedPid = join(&oldStack)) != thread)
   {
+    free(oldStack);
     mutex_unlock(libMutex);
     mutex_lock(libMutex);
   }
+  free(oldStack);
   mutex_lock(libMutex);
 
   node = getNode(thread);
