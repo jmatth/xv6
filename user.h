@@ -29,6 +29,7 @@ int sleep(int);
 int uptime(void);
 int clone(void(*)(void*), void*, void*);
 int join(void**);
+void yield(void);
 
 int mutex_init();
 int mutex_trylock(int);

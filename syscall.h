@@ -24,9 +24,10 @@
 
 #define SYS_clone  22
 #define SYS_join   23
+#define SYS_yield  24
 
-#define SYS_mutex_init    24
-#define SYS_mutex_trylock 25
-#define SYS_mutex_lock    26
-#define SYS_mutex_unlock  27
-#define SYS_mutex_destroy 28
+#define SYS_mutex_init    25
+#define SYS_mutex_trylock 26
+#define SYS_mutex_lock    27
+#define SYS_mutex_unlock  28
+#define SYS_mutex_destroy 29

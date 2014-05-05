@@ -100,6 +100,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_clone(void);
 extern int sys_join(void);
+extern int sys_yield(void);
 extern int sys_mutex_init(void);
 extern int sys_mutex_trylock(void);
 extern int sys_mutex_lock(void);
@@ -130,6 +131,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_clone]   sys_clone,
 [SYS_join]    sys_join,
+[SYS_yield]   sys_yield,
 [SYS_mutex_init]    sys_mutex_init,
 [SYS_mutex_trylock] sys_mutex_trylock,
 [SYS_mutex_lock]    sys_mutex_lock,

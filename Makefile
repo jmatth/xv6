@@ -167,6 +167,7 @@ UPROGS=\
 	_zombie\
 	_mutextest\
 	_mypthreadtest\
+	_myretardsort\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
