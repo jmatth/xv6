@@ -34,6 +34,44 @@ sys_join(void)
 }
 
 int
+sys_mutex_init(void)
+{
+  return mutex_init();
+}
+
+int
+sys_mutex_trylock(void)
+{
+  int md;
+  argint(0, &md);
+  return mutex_trylock(md);
+}
+
+int
+sys_mutex_lock(void)
+{
+  int md;
+  argint(0, &md);
+  return mutex_lock(md);
+}
+
+int
+sys_mutex_unlock(void)
+{
+  int md;
+  argint(0, &md);
+  return mutex_unlock(md);
+}
+
+int
+sys_mutex_destroy(void)
+{
+  int md;
+  argint(0, &md);
+  return mutex_destroy(md);
+}
+
+int
 sys_exit(void)
 {
   exit();

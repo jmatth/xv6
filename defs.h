@@ -108,6 +108,13 @@ void            exit(void);
 int             fork(void);
 int             clone(void(*)(void*), void*, void*);
 int             join(void**);
+
+int             mutex_init(void);
+int             mutex_trylock(int);
+int             mutex_lock(int);
+int             mutex_unlock(int);
+int             mutex_destroy(int);
+
 int             growproc(int);
 int             kill(int);
 void            pinit(void);

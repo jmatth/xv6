@@ -20,6 +20,8 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+int numMutexes = (PGSIZE - sizeof(struct spinlock)) / sizeof(struct mutex);
+
 void
 pinit(void)
 {
@@ -32,10 +34,11 @@ pinit(void)
 // state required to run in the kernel.
 // Otherwise return 0.
 static struct proc*
-allocproc(void)
+allocproc(char isThread)
 {
   struct proc *p;
   char *sp;
+  int i;
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -56,6 +59,22 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
+
+  if (isThread)
+  {
+    p->mlock = (void*)kalloc();
+    p->mutex_table = (struct mutex*)(p->mlock + sizeof(struct spinlock));
+    for (i = 0; i < PGSIZE / sizeof(struct mutex); ++i)
+    {
+      p->mutex_table[i].used = 0;
+    }
+    initlock(p->mlock, "mtablelock");
+  }
+  else
+  {
+    p->mutex_table = 0;
+    p->mlock = 0;
+  }
 
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
@@ -82,7 +101,7 @@ userinit(void)
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
   
-  p = allocproc();
+  p = allocproc(0);
   initproc = p;
   if((p->pgdir = setupkvm(kalloc)) == 0)
     panic("userinit: out of memory?");
@@ -133,7 +152,7 @@ fork(void)
   struct proc *np;
 
   // Allocate process.
-  if((np = allocproc()) == 0)
+  if((np = allocproc(0)) == 0)
     return -1;
 
   // Copy process state from p.
@@ -169,7 +188,7 @@ clone(void(*func)(void*), void *arg, void *stack)
   struct proc *np;
 
   // Allocate process.
-  if((np = allocproc()) == 0)
+  if((np = allocproc(1)) == 0)
     return -1;
 
   // Copy process state from p.
@@ -184,6 +203,8 @@ clone(void(*func)(void*), void *arg, void *stack)
   np->sz = proc->sz;
   np->parent = proc;
   np->isThread = 1;
+  np->mutex_table = proc->mutex_table;
+  np->mlock = proc->mlock;
   *np->tf = *proc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -504,4 +525,101 @@ procdump(void)
   }
 }
 
+int
+mutex_init()
+{
+  int i;
 
+  for (i = 0; i < numMutexes; ++i)
+  {
+    if (proc->mutex_table[i].used == 0)
+    {
+      proc->mutex_table[i].used = 1;
+      release(proc->mlock);
+      proc->mutex_table[i].locked = 0;
+      proc->mutex_table[i].locked_by = -1;
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+int
+mutex_trylock(int md)
+{
+  if (md < 0 || md >= numMutexes)
+    return 1;
+
+  acquire(proc->mlock);
+
+  if (!proc->mutex_table[md].locked)
+  {
+    proc->mutex_table[md].locked = 1;
+    proc->mutex_table[md].locked_by = proc->pid;
+    release(proc->mlock);
+    return 0;
+  }
+
+  release(proc->mlock);
+  return 1;
+}
+
+int
+mutex_lock(int md)
+{
+  if (md < 0 || md >= numMutexes)
+    return 1;
+
+  acquire(proc->mlock);
+  if (proc->mutex_table[md].locked)
+    sleep(&proc->mutex_table[md], proc->mlock);
+
+  proc->mutex_table[md].locked = 1;
+  proc->mutex_table[md].locked_by = proc->pid;
+  release(proc->mlock);
+  return 0;
+}
+
+int mutex_unlock(int md)
+{
+  if (md < 0 || md >= numMutexes)
+    return 1;
+
+  acquire(proc->mlock);
+
+  if (!proc->mutex_table[md].locked || proc->mutex_table[md].locked_by != proc->pid);
+  {
+    release(proc->mlock);
+    return 1;
+  }
+
+  proc->mutex_table[md].locked = 0;
+  proc->mutex_table[md].locked_by = -1;
+
+  wakeup(&proc->mutex_table[md]);
+  release(proc->mlock);
+
+  return 0;
+}
+
+int
+mutex_destroy(int md)
+{
+  if (md < 0 || md >= numMutexes)
+    return 1;
+
+  acquire(proc->mlock);
+  if (proc->mutex_table[md].locked && proc->mutex_table[md].locked_by != proc->pid)
+  {
+    release(proc->mlock);
+    return 1;
+  }
+
+  proc->mutex_table[md].locked = 0;
+  proc->mutex_table[md].locked_by = -1;
+  proc->mutex_table[md].used = 0;
+
+  release(proc->mlock);
+  return 0;
+}
