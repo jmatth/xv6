@@ -679,8 +679,6 @@ int mutex_unlock(int md)
   wakeup(&proc->mutex_table[md]);
   release(proc->mlock);
 
-  yield();
-
   return 0;
 }
 
