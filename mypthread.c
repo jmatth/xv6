@@ -95,8 +95,11 @@ int mypthread_join(mypthread_t thread, void **retval)
   mutex_unlock(libMutex);
   while((joinedPid = join(&oldStack)) != thread)
   {
-    free(oldStack);
+    if(joinedPid != -1)
+      free(oldStack);
     mutex_unlock(libMutex);
+    if ((node = getNode(thread)) != 0)
+      break;
     mutex_lock(libMutex);
   }
   free(oldStack);
@@ -134,7 +137,10 @@ int mypthread_mutex_trylock(mypthread_mutex_t *mutex)
 
 int mypthread_mutex_unlock(mypthread_mutex_t *mutex)
 {
-  return mutex_unlock(*mutex);
+  int retval;
+  retval = mutex_unlock(*mutex);
+  mypthread_yield();
+  return retval;
 }
 
 int mypthread_mutex_destroy(mypthread_mutex_t *mutex)
