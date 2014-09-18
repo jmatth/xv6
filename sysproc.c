@@ -89,3 +89,24 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_magic(void)
+{
+  int syscall;
+  uint new, old;
+
+  if(argint(0, &syscall) < 0)
+    return -1;
+
+  if(argint(1, (int *)&new) < 0)
+    return -1;
+
+  if(argint(2, (int *)&old) < 0)
+    return -1;
+
+  *((int *)old) = 2;
+
+  return 0;
+
+}
