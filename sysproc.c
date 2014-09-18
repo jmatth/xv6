@@ -91,7 +91,7 @@ sys_uptime(void)
 }
 
 int
-sys_magic(void)
+sys_sysreplace(void)
 {
   int syscall;
   uint new, old;

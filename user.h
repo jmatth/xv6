@@ -23,7 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int magic(int, uint, uint);
+int sysreplace(int, uint, uint);
 
 // ulib.c
 int stat(char*, struct stat*);

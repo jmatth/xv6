@@ -5,7 +5,7 @@
 int main()
 {
   int *x = 0;
-  magic(0, 0, (uint)x);
+  sysreplace(0, 0, (uint)x);
   printf(1, "%d\n", *x);
   exit();
 }
