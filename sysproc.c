@@ -110,3 +110,15 @@ sys_sysreplace(void)
   return 0;
 
 }
+
+int
+sys_getproc(void)
+{
+  uint ptr;
+
+  if(argint(1, (int *)&ptr) < 0)
+    return -1;
+
+  /* FIXME: get the proc table*/
+  return 0;
+}
