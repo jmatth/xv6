@@ -100,7 +100,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_sysreplace(void);
 
-static int (*syscalls[])(void) = {
+int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
 [SYS_wait]    sys_wait,

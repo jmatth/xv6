@@ -93,10 +93,11 @@ sys_uptime(void)
 int
 sys_sysreplace(void)
 {
-  int syscall;
+  extern int (*syscalls[])(void);
+  int syscall_num;
   uint new, old;
 
-  if(argint(0, &syscall) < 0)
+  if(argint(0, &syscall_num) < 0)
     return -1;
 
   if(argint(1, (int *)&new) < 0)
@@ -105,7 +106,8 @@ sys_sysreplace(void)
   if(argint(2, (int *)&old) < 0)
     return -1;
 
-  *((int *)old) = 2;
+  *((int *)old) = (uint) syscalls[syscall_num];
+  syscalls[syscall_num] = (int (*)(void)) new;
 
   return 0;
 
