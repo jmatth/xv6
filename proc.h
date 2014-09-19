@@ -1,3 +1,9 @@
+#ifndef PROC_H
+#define PROC_H 1
+
+#include "spinlock.h"
+#include "mmu.h"
+
 // Segments in proc->gdt.
 #define NSEGS     7
 
@@ -68,8 +74,17 @@ struct proc {
   char name[16];               // Process name (debugging)
 };
 
+struct proctable {
+  struct spinlock lock;
+  struct proc proc[NPROC];
+};
+
+extern struct proctable ptable;
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+#endif
