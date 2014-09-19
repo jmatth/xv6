@@ -116,7 +116,7 @@ sys_getproc(void)
 {
   uint ptr;
 
-  if(argint(1, (int *)&ptr) < 0)
+  if(argint(0, (int *)&ptr) < 0)
     return -1;
 
   memmove((void*)ptr, &ptable, sizeof(struct proctable));
