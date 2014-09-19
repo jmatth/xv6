@@ -119,6 +119,6 @@ sys_getproc(void)
   if(argint(1, (int *)&ptr) < 0)
     return -1;
 
-  /* FIXME: get the proc table*/
+  memmove((void*)ptr, &ptable, sizeof(struct proctable));
   return 0;
 }
