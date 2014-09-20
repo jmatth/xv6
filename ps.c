@@ -1,4 +1,3 @@
-#include "types.h"
 #include "user.h"
 #include "param.h"
 #include "proc.h"
