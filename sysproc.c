@@ -112,3 +112,15 @@ sys_sysreplace(void)
   return 0;
 
 }
+
+int
+sys_getproc(void)
+{
+  uint ptr;
+
+  if(argint(0, (int *)&ptr) < 0)
+    return -1;
+
+  memmove((void*)ptr, &ptable, sizeof(struct proctable));
+  return 0;
+}
