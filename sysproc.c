@@ -124,3 +124,9 @@ sys_getproc(void)
   memmove((void*)ptr, &ptable, sizeof(struct proctable));
   return 0;
 }
+
+int
+sys_findkalloc(void)
+{
+    return (int)&kalloc;
+}

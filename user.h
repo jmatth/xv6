@@ -30,6 +30,7 @@ int sleep(int);
 int uptime(void);
 int sysreplace(int, uint, uint);
 int getproc(void*);
+int findkalloc(void);
 
 // ulib.c
 int stat(char*, struct stat*);
