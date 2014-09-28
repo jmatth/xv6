@@ -3,6 +3,8 @@
 
 #include "spinlock.h"
 #include "mmu.h"
+#include "param.h"
+#include "x86.h"
 
 // Segments in proc->gdt.
 #define NSEGS     7
