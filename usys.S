@@ -29,6 +29,7 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+SYSCALL(alarm)
 
 .globl __tramp
 __tramp:

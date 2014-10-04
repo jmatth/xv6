@@ -112,3 +112,12 @@ sys_signal(void)
 
     return old;
 }
+
+int
+sys_alarm(void)
+{
+  unsigned int msecs;
+
+  argint(0, (int*)&msecs);
+  return 0;
+}
