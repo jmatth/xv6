@@ -175,7 +175,7 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_signal_test\
+	_test_sigsegv\
 	_signal_cost\
 	_test_sigalrm\
 
