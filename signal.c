@@ -6,6 +6,10 @@
 #include "proc.h"
 #include "signal2.h"
 
+// Easy manipulation of the proc struct
+#define PUSH(val) tf->esp -= sizeof(uint); \
+                  *(uint*)(tf->esp) = val
+
 void
 sigrecieve(int sig, struct trapframe *tf)
 {

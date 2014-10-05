@@ -117,7 +117,20 @@ int
 sys_alarm(void)
 {
   unsigned int msecs;
+  int currtime;
+  int old_alarm;
 
   argint(0, (int*)&msecs);
+  old_alarm = proc->next_alarm;
+  currtime = sys_uptime();
+
+  if(msecs == 0)
+    proc->next_alarm = 0;
+  else
+    proc->next_alarm = currtime + msecs;
+
+  if(old_alarm > 0 && old_alarm > currtime)
+    return old_alarm - currtime;
+
   return 0;
 }

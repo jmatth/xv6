@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "signal2.h"
 
 struct {
   struct spinlock lock;
@@ -55,6 +56,9 @@ found:
   {
       p->handlers[i] = (sighandler_t)-1;
   }
+
+  // Initialize the next_alarm field
+  p->next_alarm = 0;
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){

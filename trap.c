@@ -33,6 +33,17 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
+// Helper to check for and deliver SIGALRM
+inline void
+check_alarm(struct trapframe *tf)
+{
+  if(proc->next_alarm != 0 && proc->next_alarm <= ticks)
+  {
+    proc->next_alarm = 0;
+    sigrecieve(SIGALRM, tf);
+  }
+}
+
 //PAGEBREAK: 41
 void
 trap(struct trapframe *tf)
@@ -44,6 +55,7 @@ trap(struct trapframe *tf)
     syscall();
     if(proc->killed)
       exit();
+    check_alarm(tf);
     return;
   }
 
@@ -119,4 +131,8 @@ trap(struct trapframe *tf)
   // Check if the process has been killed since we yielded
   if(proc && proc->killed && (tf->cs&3) == DPL_USER)
     exit();
+
+  // See if there's an alarm to ring
+  if((tf->cs&3) == DPL_USER && proc != 0)
+    check_alarm(tf);
 }
