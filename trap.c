@@ -80,6 +80,12 @@ trap(struct trapframe *tf)
     break;
 
   case T_PGFLT:
+    if(proc == 0 || (tf->cs&3) == 0){
+      // In kernel, it must be our mistake.
+      cprintf("pagefault in kernel from cpu %d eip %x (cr2=0x%x)\n",
+              cpu->id, tf->eip, rcr2());
+      panic("kernel pagefault");
+    }
     sigrecieve(SIGSEGV, tf);
     break;
 
