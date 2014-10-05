@@ -177,6 +177,7 @@ UPROGS=\
 	_zombie\
 	_signal_test\
 	_signal_cost\
+	_alarm_test\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
