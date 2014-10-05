@@ -1,5 +1,5 @@
-#ifndef __types__
-#define __types__ 1
+#ifndef TYPES_H
+#define TYPES_H 1
 
 typedef unsigned int   uint;
 typedef unsigned short ushort;

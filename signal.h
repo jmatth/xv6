@@ -1,5 +1,5 @@
-#ifndef __SIGNAL__
-#define __SIGNAL__ 1
+#ifndef SIGNAL_H
+#define SIGNAL_H 1
 
 // Number of signals we have.
 #define NSIGS 1
