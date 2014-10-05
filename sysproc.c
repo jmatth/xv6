@@ -61,6 +61,7 @@ int
 sys_sleep(void)
 {
   int n;
+  int remaining;
   uint ticks0;
   
   if(argint(0, &n) < 0)
@@ -72,9 +73,17 @@ sys_sleep(void)
       release(&tickslock);
       return -1;
     }
+
+    if(proc->next_alarm != 0 && proc->next_alarm <= ticks)
+      break;
+
     sleep(&ticks, &tickslock);
   }
+  remaining = n - (ticks - ticks0);
   release(&tickslock);
+
+  if(remaining > 0)
+    return remaining;
   return 0;
 }
 

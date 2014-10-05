@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
 
   while(1)
   {
-    printf(1, "%d\n", uptime());
-    sleep(10);
+    printf(1, "%d\n", sleep(10000));
   }
 }
