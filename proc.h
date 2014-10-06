@@ -66,7 +66,7 @@ struct proc {
   int killed;                    // If non-zero, have been killed
   struct file *ofile[NOFILE];    // Open files
   struct inode *cwd;             // Current directory
-  int next_alarm;                // Next time to signal an alarm
+  uint next_alarm;               // Next time to signal an alarm
   sighandler_t handlers[NSIGS];  // Signal handlers
   sighandler_t tramp;            // Address of trampoline
   char name[16];                 // Process name (debugging)
