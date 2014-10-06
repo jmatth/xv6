@@ -30,6 +30,7 @@ SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(alarm)
+SYSCALL(microuptime)
 
 .globl __tramp
 __tramp:

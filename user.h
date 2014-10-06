@@ -27,6 +27,7 @@ int sleep(int);
 int uptime(void);
 int signal(int, sighandler_t);
 uint alarm(uint);
+uint microuptime(void);
 
 // ulib.c
 int stat(char*, struct stat*);

@@ -143,3 +143,9 @@ sys_alarm(void)
 
   return 0;
 }
+
+int
+sys_microuptime(void)
+{
+  return 0;
+}
