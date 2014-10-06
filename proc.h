@@ -67,6 +67,7 @@ struct proc {
   struct file *ofile[NOFILE];    // Open files
   struct inode *cwd;             // Current directory
   uint next_alarm;               // Next time to signal an alarm
+  uint next_alarm_usecs;         // Microseconds after next_alarm to alarm
   sighandler_t handlers[NSIGS];  // Signal handlers
   sighandler_t tramp;            // Address of trampoline
   char name[16];                 // Process name (debugging)

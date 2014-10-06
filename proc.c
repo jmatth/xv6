@@ -59,6 +59,7 @@ found:
 
   // Initialize the next_alarm field
   p->next_alarm = 0;
+  p->next_alarm_usecs = 0;
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){

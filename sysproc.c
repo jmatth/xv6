@@ -7,6 +7,8 @@
 #include "mmu.h"
 #include "proc.h"
 #include "signal.h"
+#include "softtimer.h"
+#include "timer.h"
 
 int
 sys_fork(void)
@@ -62,8 +64,9 @@ sys_sleep(void)
 {
   int n;
   int remaining;
+  uint usecs;
   uint ticks0;
-  
+
   if(argint(0, &n) < 0)
     return -1;
   acquire(&tickslock);
@@ -74,8 +77,22 @@ sys_sleep(void)
       return -1;
     }
 
-    if(proc->next_alarm != 0 && proc->next_alarm <= ticks)
-      break;
+    if(proc->next_alarm != 0)
+    {
+      if(proc->next_alarm < ticks)
+      {
+        break;
+      }
+      else if(proc->next_alarm == ticks)
+      {
+        usecs = read_PIT_count();
+        usecs = TIMER_FREQ/TIMER_IPS - usecs;
+        if(proc->next_alarm_usecs <= usecs)
+        {
+          break;
+        }
+      }
+    }
 
     sleep(&ticks, &tickslock);
   }
@@ -125,18 +142,24 @@ sys_signal(void)
 int
 sys_alarm(void)
 {
-  unsigned int msecs;
-  int currtime;
-  int old_alarm;
+  uint usecs;
+  uint tmsecs;
+  uint currtime;
+  uint old_alarm;
 
-  argint(0, (int*)&msecs);
+  argint(0, (int*)&usecs);
   old_alarm = proc->next_alarm;
   currtime = sys_uptime();
 
-  if(msecs == 0)
+  if(usecs == 0)
     proc->next_alarm = 0;
   else
-    proc->next_alarm = currtime + msecs;
+  {
+    tmsecs = usecs / 10000;
+    usecs = usecs % 10000;
+    proc->next_alarm = currtime + tmsecs;
+    proc->next_alarm_usecs = usecs;
+  }
 
   if(old_alarm > 0 && old_alarm > currtime)
     return old_alarm - currtime;
@@ -144,8 +167,8 @@ sys_alarm(void)
   return 0;
 }
 
-int
+ushort
 sys_microuptime(void)
 {
-  return 0;
+  return read_PIT_count();
 }

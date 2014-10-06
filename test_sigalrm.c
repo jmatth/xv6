@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
 
   signal(SIGALRM, &handler1);
   alarm(100);
-  val = sleep(10000000);
+  printf(1, "Before sleep, ZZZZZzzzzzz\n");
+  val = sleep(100);
   if(val <= 0)
   {
     printf(1, "ERROR: sleep not interupted\n");

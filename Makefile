@@ -19,6 +19,7 @@ OBJS = \
 	spinlock.o\
 	string.o\
 	swtch.o\
+	softtimer.o\
 	syscall.o\
 	sysfile.o\
 	sysproc.o\
@@ -178,6 +179,7 @@ UPROGS=\
 	_test_sigsegv\
 	_signal_cost\
 	_test_sigalrm\
+	_softtimers\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

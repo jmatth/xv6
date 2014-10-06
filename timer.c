@@ -6,6 +6,7 @@
 #include "defs.h"
 #include "traps.h"
 #include "x86.h"
+#include "timer.h"
 
 #define IO_TIMER1       0x040           // 8253 Timer #1
 
@@ -13,7 +14,6 @@
 // (TIMER_FREQ/freq) is the appropriate count
 // to generate a frequency of freq Hz.
 
-#define TIMER_FREQ      1193182
 #define TIMER_DIV(x)    ((TIMER_FREQ+(x)/2)/(x))
 
 #define TIMER_MODE      (IO_TIMER1 + 3) // timer mode port
@@ -26,7 +26,7 @@ timerinit(void)
 {
   // Interrupt 100 times/sec.
   outb(TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
-  outb(IO_TIMER1, TIMER_DIV(100) % 256);
-  outb(IO_TIMER1, TIMER_DIV(100) / 256);
+  outb(IO_TIMER1, TIMER_DIV(TIMER_IPS) % 256);
+  outb(IO_TIMER1, TIMER_DIV(TIMER_IPS) / 256);
   picenable(IRQ_TIMER);
 }

@@ -8,6 +8,8 @@
 #include "traps.h"
 #include "spinlock.h"
 #include "signal2.h"
+#include "softtimer.h"
+#include "timer.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -37,10 +39,25 @@ idtinit(void)
 inline void
 check_alarm(struct trapframe *tf)
 {
-  if(proc->next_alarm != 0 && proc->next_alarm <= ticks)
+  uint usecs;
+
+  if(proc->next_alarm != 0)
   {
-    proc->next_alarm = 0;
-    sigrecieve(SIGALRM, tf);
+    if(proc->next_alarm < ticks)
+    {
+      proc->next_alarm = 0;
+      sigrecieve(SIGALRM, tf);
+    }
+    else if(proc->next_alarm == ticks)
+    {
+      usecs = read_PIT_count();
+      usecs = TIMER_FREQ/TIMER_IPS - usecs;
+      if(proc->next_alarm_usecs <= usecs)
+      {
+        proc->next_alarm = 0;
+        sigrecieve(SIGALRM, tf);
+      }
+    }
   }
 }
 
