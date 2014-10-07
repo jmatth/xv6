@@ -167,8 +167,9 @@ sys_alarm(void)
   return 0;
 }
 
-ushort
+uint
 sys_microuptime(void)
 {
-  return read_PIT_count();
+  uint msecs = sys_uptime() * 10000;
+  return msecs + (TIMER_FREQ / TIMER_IPS - read_PIT_count());
 }
