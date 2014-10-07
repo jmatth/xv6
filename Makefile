@@ -178,7 +178,7 @@ UPROGS=\
 	_zombie\
 	_test_sigsegv\
 	_signal_cost\
-	_test_sigalrm\
+	_test_softtimer\
 	_softtimers\
 
 fs.img: mkfs README $(UPROGS)
