@@ -22,6 +22,7 @@ sigrecieve(int sig, struct trapframe *tf)
                 "eip 0x%x addr 0x%x\n",
                 proc->pid, proc->name, tf->eip, rcr2());
         proc->killed = 1;
+        return;
         break;
       default:
         return;
