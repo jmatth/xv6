@@ -49,7 +49,7 @@ threadnode* getNode(int pid)
   return 0;
 }
 
-int mypthread_create(mypthread_t *thread, const mypthread_attr_t *attr,
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                    void *(*start_routine)(void*), void *arg)
 {
   if (firstcall)
@@ -61,7 +61,7 @@ int mypthread_create(mypthread_t *thread, const mypthread_attr_t *attr,
   return 0;
 }
 
-void mypthread_exit(void *retval)
+void pthread_exit(void *retval)
 {
   mutex_lock(libMutex);
 
@@ -74,13 +74,13 @@ void mypthread_exit(void *retval)
   exit();
 }
 
-int mypthread_yield()
+int pthread_yield()
 {
   yield();
   return 0;
 }
 
-int mypthread_join(mypthread_t thread, void **retval)
+int pthread_join(pthread_t thread, void **retval)
 {
   threadnode *node;
   void* oldStack;
@@ -119,31 +119,31 @@ foundjoinnode:
   return 0;
 }
 
-int mypthread_mutex_init(mypthread_mutex_t *mutex, const mypthread_mutex_attr_t *attr)
+int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutex_attr_t *attr)
 {
   *mutex = mutex_init();
   return *mutex;
 }
 
-int mypthread_mutex_lock(mypthread_mutex_t *mutex)
+int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
   return mutex_lock(*mutex);
 }
 
-int mypthread_mutex_trylock(mypthread_mutex_t *mutex)
+int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
   return mutex_trylock(*mutex);
 }
 
-int mypthread_mutex_unlock(mypthread_mutex_t *mutex)
+int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
   int retval;
   retval = mutex_unlock(*mutex);
-  mypthread_yield();
+  pthread_yield();
   return retval;
 }
 
-int mypthread_mutex_destroy(mypthread_mutex_t *mutex)
+int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
   return mutex_destroy(*mutex);
 }
