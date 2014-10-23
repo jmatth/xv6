@@ -4,15 +4,15 @@
 int get_eip(void);
 
 void init_stack(ucontext_t *ucp, int argc, int *argv) {
-    int *space = (int *)ucp->uc_stack;
+    void *space = (int *)(ucp->uc_stack.ss_sp);
     int i;
 
-    ucp->esp = (int)space;
-    for(i = 0; i < argc; i++) {
-        space[i] = argv[i];
+    ucp->esp = space + ucp->uc_stack.ss_size - 1;
+    for(i = 1; i <= argc; i++) {
+        ucp->esp -= 4;
+        *(int*)(ucp->esp) = argv[argc - i];
     }
 
-    ucp->esp += i;
     ucp->ebp = ucp->esp;
 }
 
@@ -25,19 +25,23 @@ int getcontext(ucontext_t *ucp) {
     return 0;
 }
 
-void makecontext(ucontext_t *ucp, void(*func)(void), int argc, int *argv) {
-    ucp->eip = (int)func;
+void makecontext(ucontext_t *ucp, void(*func)(void), int argc, ...) {
+    ucp->eip = func;
+    int *argv = (int*) &argc + sizeof(int);
 
     // Set up our stack
     init_stack(ucp, argc, argv);
 }
 
 int setcontext(ucontext_t *ucp) {
-    uint target;
-    target = ucp->eip;
+    register uint target;
+    target = (uint)ucp->eip;
+    /* printf(1, "jumping to 0x%x\n", target); */
+    /* printf(1, "ebp is 0x%x\n", ucp->ebp); */
+    /* printf(1, "esp is 0x%x\n", ucp->esp); */
     // Restore esp and ebp from old context
-    asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
     asm("\t movl %0, %%esp" : : "r"(ucp->esp));
+    asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
 
     // Ret to continue execution from where we were before
     asm("jmp %0" : :"r"(target));

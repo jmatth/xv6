@@ -1,36 +1,43 @@
 #include "user.h"
 #include "context.h"
 
-struct ucontext maincontext, othercontext;
+struct ucontext otherc1, otherc2;
 
-void other() {
-  printf(1, "In other, swapping to main...\n");
-  setcontext(&maincontext);
+void padding(){
+  return;
+}
+
+void other1() {
+  static int called = 0;
+  printf(1, "In other1\n");
+  if (called < 5) {
+    called++;
+    setcontext(&otherc2);
+  } else {
+    printf(1, "Exiting in other1\n");
+    exit();
+  }
+}
+
+void other2() {
+  printf(1, "In other2\n");
+  setcontext(&otherc1);
 }
 
 int main(int argc, char *argv[])
 {
-  int count = 0;
   printf(1, "Starting main\n");
 
-  getcontext(&maincontext);
+  otherc1.uc_stack.ss_sp = malloc(512);
+  printf(1, "main: stack starts at 0x%x\n", otherc1.uc_stack.ss_sp + 512 - 1);
+  otherc2.uc_stack.ss_sp = malloc(512);
+  otherc1.uc_stack.ss_size = 512;
+  otherc2.uc_stack.ss_size = 512;
+  makecontext(&otherc1, &other1, 0, 0);
+  makecontext(&otherc2, &other2, 0, 0);
 
-  char *otherstack = malloc(512);
-  char *otherstackend = otherstack + 512;
-  printf(1, "Allocated other stack at 0x%x\n", otherstack);
-  othercontext.uc_stack = otherstackend;
-  makecontext(&othercontext, &other, 0, 0);
-
-  if (count < 10)
-  {
-    count++;
-    printf(1, "Swapping to other...\n");
-    setcontext(&othercontext);
-  }
-  else
-  {
-    exit();
-  }
+  printf(1, "Setting context to other1\n");
+  setcontext(&otherc1);
 
   exit();
 }
