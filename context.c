@@ -1,57 +1,78 @@
-#include <stdlib.h>
-
-struct ucontext_stack {
-    int *ebp;
-    int *esp;
-};
+#include "user.h"
 
 struct ucontext {
-    struct ucontext_stack *stack;
     void *uc_stack;
-    void (*func)(void);
-    int argc;
-    int *args;
+
+    int eip;
+    int esp;
+    int ebp;
 };
 
 typedef struct ucontext ucontext_t;
-typedef struct ucontext_stack ucstack_t;
-typedef struct regcontext regcontext_t;
 
-ucstack_t *init_stack(void *mem, int argc, int *argv) {
-    ucstack_t *s = (ucstack_t *) malloc(sizeof(ucstack_t));
-    int *space = (int *)mem;
+int get_eip(void);
+
+void init_stack(ucontext_t *ucp, int argc, int *argv) {
+    int *space = (int *)ucp->uc_stack;
     int i;
 
-    s->esp = space;
+    ucp->esp = (int)space;
     for(i = 0; i < argc; i++) {
         space[i] = argv[i];
     }
 
-    s->esp += i;
-    s->ebp = s->esp;
-
-    return s;
+    ucp->esp += i;
+    ucp->ebp = ucp->esp;
 }
 
 int getcontext(ucontext_t *ucp) {
     *ucp = *((ucontext_t *)malloc(sizeof(ucontext_t)));
-    ucp->uc_stack = NULL;
-    ucp->stack = NULL;
-    ucp->func = NULL;
-    ucp->args = NULL;
-    ucp->argc = -1;
+    asm("\t movl %%ebp,%0" : "=r"(ucp->ebp));
+    asm("\t movl %%esp,%0" : "=r"(ucp->esp));
+    ucp->eip = get_eip();
+    return 0;
 }
 
 void makecontext(ucontext_t *ucp, void(*func)(void), int argc, int *argv) {
-    ucp->func = func;
-    ucp->argc = argc;
-    ucp->args = argv;
+    ucp->eip = (int)func;
 
     // Set up our stack
-    ucp->stack = init_stack(ucp->uc_stack, argc, argv);
+    init_stack(ucp, argc, argv);
+}
+
+int setcontext(ucontext_t *ucp) {
+    // Restore esp and ebp from old context
+    asm("\t movl %0, %%esp" : : "r"(ucp->esp));
+    asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
+
+    // Ret to continue execution from where we were before
+    asm("jmp %0" : :"r"(ucp->eip));
+
+    return 1;
 }
 
 int swapcontext(ucontext_t *oucp, ucontext_t *ucp) {
-    oucp->stack->ebp = ;
-    oucp->stack->esp = ;
+    // Store our current esp, ebp
+    asm("\t movl %%ebp,%0" : "=r"(oucp->ebp));
+    asm("\t movl %%esp,%0" : "=r"(oucp->esp));
+
+    // Restore esp and ebp from old context
+    asm("\t movl %0, %%esp" : : "r"(ucp->esp));
+    asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
+
+    oucp->eip = get_eip() + 4;
+
+    // Ret to continue execution from where we were before
+    asm("jmp %0" : :"r"(ucp->eip));
+
+    return 1;
+}
+
+//Helpers to get register vals
+
+int get_eip() {
+    __asm__("call _here\n\t"
+            "_here: pop %eax");
+    extern int eax_var asm("%eax");
+    return eax_var;
 }
