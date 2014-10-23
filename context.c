@@ -18,9 +18,10 @@ void init_stack(ucontext_t *ucp, int argc, int *argv) {
 
 int getcontext(ucontext_t *ucp) {
     *ucp = *((ucontext_t *)malloc(sizeof(ucontext_t)));
-    asm("\t movl %%ebp,%0" : "=r"(ucp->ebp));
-    asm("\t movl %%esp,%0" : "=r"(ucp->esp));
-    ucp->eip = get_eip();
+    asm("\t movl (%%ebp),%0"   : "=r"(ucp->ebp));
+    asm("\t movl -1(%%ebp),%0" : "=r"(ucp->eip));
+    asm("\t movl %%ebp,%0"     : "=r"(ucp->esp));
+    ucp->esp -=4;
     return 0;
 }
 
@@ -33,8 +34,8 @@ void makecontext(ucontext_t *ucp, void(*func)(void), int argc, int *argv) {
 
 int setcontext(ucontext_t *ucp) {
     // Restore esp and ebp from old context
-    asm("\t movl %0, %%esp" : : "r"(ucp->esp));
     asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
+    asm("\t movl %0, %%esp" : : "r"(ucp->esp));
 
     // Ret to continue execution from where we were before
     asm("jmp %0" : :"r"(ucp->eip));
@@ -43,15 +44,15 @@ int setcontext(ucontext_t *ucp) {
 }
 
 int swapcontext(ucontext_t *oucp, ucontext_t *ucp) {
-    // Store our current esp, ebp
-    asm("\t movl %%ebp,%0" : "=r"(oucp->ebp));
-    asm("\t movl %%esp,%0" : "=r"(oucp->esp));
+    // Store our callers esp, ebp, eip
+    asm("\t movl (%%ebp),%0"   : "=r"(oucp->ebp));
+    asm("\t movl -1(%%ebp),%0" : "=r"(oucp->eip));
+    asm("\t movl %%ebp,%0"     : "=r"(oucp->esp));
+    oucp->esp -=4;
 
     // Restore esp and ebp from old context
-    asm("\t movl %0, %%esp" : : "r"(ucp->esp));
     asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
-
-    oucp->eip = get_eip() + 4;
+    asm("\t movl %0, %%esp" : : "r"(ucp->esp));
 
     // Ret to continue execution from where we were before
     asm("jmp %0" : :"r"(ucp->eip));
