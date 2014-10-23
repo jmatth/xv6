@@ -78,7 +78,7 @@ void myqueueempty(threadqueue*);
  *  Cooperative  *
  *****************/
 
-void mypthread_create(mypthread_t *, const pthread_attr_t *, void* (*)(void*), void*);
+void mypthread_create(mypthread_t *, const char *, void* (*)(void*), void*);
 
 void mypthread_yield();
 

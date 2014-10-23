@@ -1,12 +1,11 @@
-#include <stdlib.h>
-#include <ucontext.h>
-#include <stdio.h>
-#include <sys/time.h>
-#include <signal.h>
+#include "user.h"
+#include "signal.h"
 #include "mypthread.h"
 
 #define CLOCKTICKSEC  0
 #define CLOCKTICKUSEC 5
+
+#define NULL 0
 
 int thread_table_l;
 mypthread_cont_t **thread_table;
@@ -83,7 +82,8 @@ inline void sched(mypthread_state state)
 
 inline void init_main_thread()
 {
-    thread_table = calloc(sizeof(mypthread_cont_t*), 256);
+    thread_table = malloc(sizeof(mypthread_cont_t*) * 256);
+    memset(thread_table, 0, sizeof(mypthread_cont_t*) * 256);
     thread_table_l = 256;
     curr_thread = 0;
     thread_table[curr_thread] = malloc(sizeof(mypthread_cont_t));
@@ -98,8 +98,8 @@ inline void init_main_thread()
     myqueueinit(&mainqueue);
 
     firstcall = 0;
-    signal(SIGVTALRM, timer_handler);
-    atexit(exit_cleanup);
+    signal(SIGALRM, timer_handler);
+    /* atexit(exit_cleanup); */
 
     init_timer();
 }
@@ -118,20 +118,14 @@ inline void init_thread(mypthread_cont_t *thread, int tid)
 
 void init_timer()
 {
-    timer.it_interval.tv_sec = CLOCKTICKSEC;
-    timer.it_interval.tv_usec = CLOCKTICKUSEC;
-
-    timer.it_value.tv_sec = CLOCKTICKSEC;
-    timer.it_value.tv_usec = CLOCKTICKUSEC;
-
-    setitimer(ITIMER_VIRTUAL, &timer, NULL);
+    alarm(CLOCKTICKUSEC);
 }
 
 /**********************************
  *  Cooperative thread functions  *
  **********************************/
 
-void mypthread_create(mypthread_t *thread, const pthread_attr_t *attr,
+void mypthread_create(mypthread_t *thread, const char *unused,
                      void* (*func)(void*), void *arg)
 {
     int i, next_tid;
