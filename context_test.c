@@ -12,9 +12,13 @@ int main(int argc, char *argv[])
 {
   int count = 0;
   printf(1, "Starting main\n");
+
   getcontext(&maincontext);
+
   char *otherstack = malloc(512);
-  othercontext.uc_stack = otherstack;
+  char *otherstackend = otherstack + 512;
+  printf(1, "Allocated other stack at 0x%x\n", otherstack);
+  othercontext.uc_stack = otherstackend;
   makecontext(&othercontext, &other, 0, 0);
 
   if (count < 10)
