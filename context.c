@@ -33,12 +33,14 @@ void makecontext(ucontext_t *ucp, void(*func)(void), int argc, int *argv) {
 }
 
 int setcontext(ucontext_t *ucp) {
+    uint target;
+    target = ucp->eip;
     // Restore esp and ebp from old context
     asm("\t movl %0, %%ebp" : : "r"(ucp->ebp));
     asm("\t movl %0, %%esp" : : "r"(ucp->esp));
 
     // Ret to continue execution from where we were before
-    asm("jmp %0" : :"r"(ucp->eip));
+    asm("jmp %0" : :"r"(target));
 
     return 1;
 }
