@@ -1,14 +1,5 @@
 #include "user.h"
-
-struct ucontext {
-    void *uc_stack;
-
-    int eip;
-    int esp;
-    int ebp;
-};
-
-typedef struct ucontext ucontext_t;
+#include "context.h"
 
 int get_eip(void);
 
