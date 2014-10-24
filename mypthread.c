@@ -1,5 +1,6 @@
 #include "user.h"
 #include "signal.h"
+#include "context.h"
 #include "mypthread.h"
 
 #define CLOCKTICKSEC  0
@@ -14,8 +15,6 @@ int curr_thread;
 long int next_mutex_id = 0;
 
 threadqueue mainqueue;
-
-struct itimerval timer;
 
 short int firstcall = 1;
 
@@ -92,7 +91,7 @@ inline void init_main_thread()
 
     LOCKLIB;
 
-    thread_table[curr_thread]->context.uc_link = NULL;
+    /* thread_table[curr_thread]->context.uc_link = NULL; */
     thread_table[curr_thread]->state = RUNNING;
 
     myqueueinit(&mainqueue);
@@ -110,7 +109,7 @@ inline void init_thread(mypthread_cont_t *thread, int tid)
     thread->tid = tid;
     thread->context.uc_stack.ss_sp = thread->stack;
     thread->context.uc_stack.ss_size = STACKSIZE;
-    thread->context.uc_link = &(thread_table[curr_thread]->context);
+    /* thread->context.uc_link = &(thread_table[curr_thread]->context); */
     thread->state = RUNNABLE;
     thread->in_mypthreads = 0;
     thread->sleeping_on = -1;
@@ -154,7 +153,7 @@ void mypthread_create(mypthread_t *thread, const char *unused,
 
     *thread = next_tid;
 
-    makecontext(&(thread_table[next_tid]->context), (void*)func, 1, arg);
+    makecontext(&(thread_table[next_tid]->context), (void*)func, 1, (int)arg);
 
     myenqueue(next_tid, &mainqueue);
     UNLOCKLIB;
