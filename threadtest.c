@@ -1,6 +1,6 @@
 #include "types.h"
 #include "user.h"
-#include "mypthread.c"
+#include "mypthread.h"
 
 void* threadFunc(void* arg) {
   printf(1, "Inside the thread.\n");

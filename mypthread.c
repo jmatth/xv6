@@ -1,6 +1,6 @@
-#include "mypthread.h"
 #include "types.h"
 #include "user.h"
+#include "mypthread.h"
 
 threadnode *deadThreads = 0;
 int firstcall = 1;

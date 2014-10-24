@@ -1,5 +1,5 @@
 #include "user.h"
-#include "mypthread.c"
+#include "mypthread.h"
 
 void* threadFunc(void* arg) {
   printf(1, "   in thread with pid %d. exiting with pthread_exit\n", getpid());
