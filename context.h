@@ -17,7 +17,7 @@ struct ucontext {
 typedef struct ucontext ucontext_t;
 
 int getcontext(ucontext_t *ucp);
-void makecontext(ucontext_t *ucp, void(*func)(void), int argc, ...);
+void makecontext(ucontext_t *ucp, void(*func)(void), int argc, int, ...);
 int setcontext(ucontext_t *ucp);
 int swapcontext(ucontext_t *oucp, ucontext_t *ucp);
 

@@ -7,27 +7,30 @@ void init_stack(ucontext_t *ucp, int argc, int *argv) {
     void *space = (int *)(ucp->uc_stack.ss_sp);
     int i;
 
-    ucp->esp = space + ucp->uc_stack.ss_size - 1;
+    ucp->esp = space + ucp->uc_stack.ss_size - 4;
     for(i = 1; i <= argc; i++) {
         ucp->esp -= 4;
         *(int*)(ucp->esp) = argv[argc - i];
+        printf(1, "arg %d is %d\n", i, *(int*)(ucp->esp));
     }
 
+    ucp->esp -= 4;
+    *(int*)(ucp->esp) = 0xDEADBEEF;
     ucp->ebp = ucp->esp;
 }
 
 int getcontext(ucontext_t *ucp) {
     *ucp = *((ucontext_t *)malloc(sizeof(ucontext_t)));
     asm("\t movl (%%ebp),%0"   : "=r"(ucp->ebp));
-    asm("\t movl -4(%%ebp),%0" : "=r"(ucp->eip));
+    asm("\t movl 0x4(%%ebp),%0" : "=r"(ucp->eip));
     asm("\t movl %%ebp,%0"     : "=r"(ucp->esp));
-    ucp->esp -=4;
+    ucp->esp += 4;
     return 0;
 }
 
-void makecontext(ucontext_t *ucp, void(*func)(void), int argc, ...) {
+void makecontext(ucontext_t *ucp, void(*func)(void), int argc, int args_list, ...) {
     ucp->eip = func;
-    int *argv = (int*) &argc + sizeof(int);
+    int *argv = &args_list;
 
     // Set up our stack
     init_stack(ucp, argc, argv);
@@ -56,9 +59,9 @@ int swapcontext(ucontext_t *oucp, ucontext_t *ucp) {
 
     // Store our callers esp, ebp, eip
     asm("\t movl (%%ebp),%0"   : "=r"(oucp->ebp));
-    asm("\t movl -4(%%ebp),%0" : "=r"(oucp->eip));
+    asm("\t movl 0x4(%%ebp),%0" : "=r"(oucp->eip));
     asm("\t movl %%ebp,%0"     : "=r"(oucp->esp));
-    oucp->esp -=4;
+    oucp->esp += 4;
 
     // Restore esp and ebp from old context
     asm("\t movl %0, %%esp" : : "r"(ucp->esp));
