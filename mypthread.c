@@ -9,7 +9,7 @@
 #define NULL 0
 
 int thread_table_l;
-mypthread_cont_t **thread_table;
+pthread_cont_t **thread_table;
 int curr_thread;
 
 long int next_mutex_id = 0;
@@ -18,8 +18,8 @@ threadqueue mainqueue;
 
 short int firstcall = 1;
 
-#define LOCKLIB thread_table[curr_thread]->in_mypthreads = 1
-#define UNLOCKLIB thread_table[curr_thread]->in_mypthreads = 0
+#define LOCKLIB thread_table[curr_thread]->in_pthreads = 1
+#define UNLOCKLIB thread_table[curr_thread]->in_pthreads = 0
 
 void exit_cleanup(){
     LOCKLIB;
@@ -44,7 +44,7 @@ void exit_cleanup(){
 
 void timer_handler(int sig)
 {
-    if (!thread_table[curr_thread]->in_mypthreads)
+    if (!thread_table[curr_thread]->in_pthreads)
     {
         LOCKLIB;
         sched(RUNNABLE);
@@ -53,9 +53,9 @@ void timer_handler(int sig)
     UNLOCKLIB;
 }
 
-inline void swtch(mypthread_t next, mypthread_state state)
+inline void swtch(pthread_t next, pthread_state state)
 {
-    mypthread_cont_t *this_thread = thread_table[curr_thread];
+    pthread_cont_t *this_thread = thread_table[curr_thread];
 
     if (state == RUNNABLE)
         myenqueue(curr_thread, &mainqueue);
@@ -67,7 +67,7 @@ inline void swtch(mypthread_t next, mypthread_state state)
     swapcontext(&(this_thread->context), &(thread_table[next]->context));
 }
 
-inline void sched(mypthread_state state)
+inline void sched(pthread_state state)
 {
     int next_tid;
 
@@ -81,11 +81,11 @@ inline void sched(mypthread_state state)
 
 inline void init_main_thread()
 {
-    thread_table = malloc(sizeof(mypthread_cont_t*) * 256);
-    memset(thread_table, 0, sizeof(mypthread_cont_t*) * 256);
+    thread_table = malloc(sizeof(pthread_cont_t*) * 256);
+    memset(thread_table, 0, sizeof(pthread_cont_t*) * 256);
     thread_table_l = 256;
     curr_thread = 0;
-    thread_table[curr_thread] = malloc(sizeof(mypthread_cont_t));
+    thread_table[curr_thread] = malloc(sizeof(pthread_cont_t));
 
     init_thread(thread_table[curr_thread], curr_thread);
 
@@ -103,7 +103,7 @@ inline void init_main_thread()
     init_timer();
 }
 
-inline void init_thread(mypthread_cont_t *thread, int tid)
+inline void init_thread(pthread_cont_t *thread, int tid)
 {
     getcontext(&(thread->context));
     thread->tid = tid;
@@ -111,7 +111,7 @@ inline void init_thread(mypthread_cont_t *thread, int tid)
     thread->context.uc_stack.ss_size = STACKSIZE;
     /* thread->context.uc_link = &(thread_table[curr_thread]->context); */
     thread->state = RUNNABLE;
-    thread->in_mypthreads = 0;
+    thread->in_pthreads = 0;
     thread->sleeping_on = -1;
 }
 
@@ -124,7 +124,7 @@ void init_timer()
  *  Cooperative thread functions  *
  **********************************/
 
-void mypthread_create(mypthread_t *thread, const char *unused,
+void pthread_create(pthread_t *thread, const char *unused,
                      void* (*func)(void*), void *arg)
 {
     int i, next_tid;
@@ -139,7 +139,7 @@ void mypthread_create(mypthread_t *thread, const char *unused,
         if (thread_table[i] == NULL)
         {
             next_tid = i;
-            thread_table[next_tid] = malloc(sizeof(mypthread_cont_t));
+            thread_table[next_tid] = malloc(sizeof(pthread_cont_t));
             break;
         }
         else if (thread_table[i]->state == DEAD)
@@ -159,14 +159,14 @@ void mypthread_create(mypthread_t *thread, const char *unused,
     UNLOCKLIB;
 }
 
-void  mypthread_yield()
+void  pthread_yield()
 {
     LOCKLIB;
     sched(RUNNABLE);
     UNLOCKLIB;
 }
 
-void mypthread_exit(void *retval)
+void pthread_exit(void *retval)
 {
     LOCKLIB;
     thread_table[curr_thread]->retval = retval;
@@ -178,10 +178,10 @@ void mypthread_exit(void *retval)
     UNLOCKLIB;
 }
 
-int mypthread_join(mypthread_t thread, void **retval)
+int pthread_join(pthread_t thread, void **retval)
 {
     LOCKLIB;
-    mypthread_cont_t *real_thread = thread_table[thread];
+    pthread_cont_t *real_thread = thread_table[thread];
 
     if (real_thread->state == ZOMBIE)
     {
@@ -208,7 +208,7 @@ int mypthread_join(mypthread_t thread, void **retval)
 /*********************
  *  Synchronization  *
  *********************/
-void mypthread_mutex_init(mypthread_mutex_t *mutex, mypthread_mutexattr_t *attr)
+void pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *attr)
 {
     if (firstcall)
         init_main_thread();
@@ -223,7 +223,7 @@ void mypthread_mutex_init(mypthread_mutex_t *mutex, mypthread_mutexattr_t *attr)
     UNLOCKLIB;
 }
 
-int mypthread_mutex_lock(mypthread_mutex_t *mutex)
+int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
     LOCKLIB;
 
@@ -240,7 +240,7 @@ int mypthread_mutex_lock(mypthread_mutex_t *mutex)
     return 0;
 }
 
-int mypthread_mutex_unlock(mypthread_mutex_t *mutex)
+int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
     LOCKLIB;
 
@@ -271,7 +271,7 @@ int mypthread_mutex_unlock(mypthread_mutex_t *mutex)
     return 0;
 }
 
-int mypthread_mutex_trylock(mypthread_mutex_t *mutex)
+int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
     LOCKLIB;
 
@@ -287,7 +287,7 @@ int mypthread_mutex_trylock(mypthread_mutex_t *mutex)
     return 0;
 }
 
-int mypthread_mutex_destroy(mypthread_mutex_t *mutex)
+int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
     myqueueempty(&(mutex->sleeping_on));
     return 0;
@@ -309,7 +309,7 @@ void myqueueempty(threadqueue *queue)
     while(mydequeue(queue) != -1);
 }
 
-int myenqueue(mypthread_t thread, threadqueue *queue)
+int myenqueue(pthread_t thread, threadqueue *queue)
 {
     struct threadnode *node;
 
@@ -331,9 +331,9 @@ int myenqueue(mypthread_t thread, threadqueue *queue)
     return 0;
 }
 
-mypthread_t mydequeue(threadqueue *queue)
+pthread_t mydequeue(threadqueue *queue)
 {
-    mypthread_t ret;
+    pthread_t ret;
     struct threadnode *curr_front;
 
     if (queue->front == NULL)

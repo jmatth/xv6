@@ -5,8 +5,8 @@
 
 int *arr;
 volatile short int sorted = 0;
-mypthread_t *threads;
-mypthread_mutex_t *mutexes;
+pthread_t *threads;
+pthread_mutex_t *mutexes;
 
 void* swap(void *ptrindex)
 {
@@ -16,13 +16,13 @@ void* swap(void *ptrindex)
     int *left = &(arr[index]);
     int *right = &(arr[index + 1]);
 
-    mypthread_mutex_t *leftm = &mutexes[index];
-    mypthread_mutex_t *rightm = &mutexes[index+1];
+    pthread_mutex_t *leftm = &mutexes[index];
+    pthread_mutex_t *rightm = &mutexes[index+1];
 
     while(!sorted)
     {
-        mypthread_mutex_lock(leftm);
-        mypthread_mutex_lock(rightm);
+        pthread_mutex_lock(leftm);
+        pthread_mutex_lock(rightm);
 
         if (*left < *right)
         {
@@ -31,13 +31,13 @@ void* swap(void *ptrindex)
             *right = tmp;
         }
 
-        mypthread_mutex_unlock(rightm);
-        mypthread_mutex_unlock(leftm);
+        pthread_mutex_unlock(rightm);
+        pthread_mutex_unlock(leftm);
 
-        mypthread_yield();
+        pthread_yield();
     }
 
-    mypthread_exit(NULL);
+    pthread_exit(NULL);
 
     return NULL;
 }
@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
     int nelems = argc - 1;
     arr = malloc(sizeof(int) * nelems);
 
-    threads = malloc(sizeof(mypthread_t) * (nelems - 1));
-    mutexes = malloc(sizeof(mypthread_mutex_t) * nelems);
+    threads = malloc(sizeof(pthread_t) * (nelems - 1));
+    mutexes = malloc(sizeof(pthread_mutex_t) * nelems);
 
     if (argc <= 1)
     {
@@ -62,31 +62,31 @@ int main(int argc, char *argv[])
     for (i = 0; i < argc - 1; ++i)
     {
         arr[i] = atoi(argv[i + 1]);
-        mypthread_mutex_init(&(mutexes[i]), NULL);
+        pthread_mutex_init(&(mutexes[i]), NULL);
     }
 
     for (i = 0; i < nelems - 1; ++i)
     {
-        mypthread_create(&(threads[i]), NULL, &swap, (void*)i);
+        pthread_create(&(threads[i]), NULL, &swap, (void*)i);
     }
 
     i = 0;
     while (i < nelems - 1)
     {
-        mypthread_mutex_lock(&mutexes[i]);
-        mypthread_mutex_lock(&mutexes[i+1]);
+        pthread_mutex_lock(&mutexes[i]);
+        pthread_mutex_lock(&mutexes[i+1]);
 
         if (arr[i] < arr[i+1])
         {
-            mypthread_mutex_unlock(&mutexes[i+1]);
-            mypthread_mutex_unlock(&mutexes[i]);
+            pthread_mutex_unlock(&mutexes[i+1]);
+            pthread_mutex_unlock(&mutexes[i]);
             // Start over if it's still not sorted.
             i = 0;
         }
         else
         {
-            mypthread_mutex_unlock(&mutexes[i+1]);
-            mypthread_mutex_unlock(&mutexes[i]);
+            pthread_mutex_unlock(&mutexes[i+1]);
+            pthread_mutex_unlock(&mutexes[i]);
             i++;
         }
     }
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     void* retval;
     for (i = 0; i < nelems - 1; ++i)
     {
-        mypthread_join((threads[i]), &retval);
+        pthread_join((threads[i]), &retval);
     }
 
     for (i = 0; i < nelems; ++i)
