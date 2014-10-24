@@ -273,6 +273,7 @@ clone(void(*func)(void*), void *arg, void *stack)
   np->tf->esp = np->tf->ebp;
   np->tf->esp -= 4;
   *(void**)(np->tf->esp) = arg;
+  np->tf->esp -= 4;
   np->tf->eip = (uint)func;
   np->stackTop = stack;
 
