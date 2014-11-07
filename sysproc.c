@@ -147,5 +147,15 @@ sys_alarm(void)
 int
 sys_mprotect(void)
 {
-  return 0;
+
+  extern int mprotect(pte_t *, uint, uint);
+  int addr;
+  int prot;
+
+  argint(0, &addr);
+  argint(1, &prot);
+
+  pte_t *pgdir = proc->pgdir;
+
+  return mprotect(pgdir, (uint)addr, (uint)prot);
 }

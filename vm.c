@@ -377,6 +377,32 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
+int mprotect(pte_t *pgdir, uint va, uint prot)
+{
+  pte_t *pte = walkpgdir(pgdir, (const void *)va, 0);
+
+  //Check that page is in page table
+  if(pte == 0)
+    return -1;
+
+  // Check that it is user memory
+  if((PTE_FLAGS(*pte) & PTE_U) != 0)
+    return -1;
+
+  switch(prot) {
+    case PROT_NONE :
+      //FIXME
+      break;
+    case PROT_READ :
+      *pte = *pte & ~(PTE_W);
+      break;
+    case PROT_WRITE :
+      *pte = *pte | PTE_W;
+      break;
+  }
+  return 0;
+}
+
 //PAGEBREAK!
 // Blank page.
 //PAGEBREAK!
