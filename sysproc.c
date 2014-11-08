@@ -150,12 +150,18 @@ sys_mprotect(void)
 
   extern int mprotect(pte_t *, uint, uint);
   int addr;
+  int len;
   int prot;
 
   argint(0, &addr);
-  argint(1, &prot);
+  argint(1, &len);
+  argint(2, &prot);
 
   pte_t *pgdir = proc->pgdir;
 
-  return mprotect(pgdir, (uint)addr, (uint)prot);
+  int res = mprotect(pgdir, (uint)addr, (uint)prot);
+  if(res < 0) {
+    return res;
+  }
+  return mprotect(pgdir, (uint)(addr+len), (uint) prot);
 }

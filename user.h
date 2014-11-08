@@ -45,3 +45,8 @@ int atoi(const char*);
 
 // Trampoline function (for signals).
 void __tramp(int);
+
+//Defines for constants
+#define PROT_NONE 0
+#define PROT_READ 1
+#define PROT_WRITE 2

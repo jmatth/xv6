@@ -386,7 +386,7 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
     return -1;
 
   // Check that it is user memory
-  if((PTE_FLAGS(*pte) & PTE_U) != 0)
+  if((*pte & PTE_U) == 0)
     return -1;
 
   switch(prot) {
