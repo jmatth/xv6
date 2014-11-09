@@ -3,6 +3,6 @@
 
 #include "signal.h"
 
-void sigrecieve(int, struct trapframe*);
+void sigrecieve(int, struct trapframe*, int, int);
 
 #endif

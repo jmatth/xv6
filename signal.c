@@ -11,7 +11,7 @@
                   *(uint*)(tf->esp) = val
 
 void
-sigrecieve(int sig, struct trapframe *tf)
+sigrecieve(int sig, struct trapframe *tf, int arg1, int arg2)
 {
   // Default actions
   if((int)proc->handlers[sig] == -1)
@@ -28,13 +28,16 @@ sigrecieve(int sig, struct trapframe *tf)
     }
   }
 
+  /* cprintf("Return will be to 0x%x\n", tf->eip); */
+
   // Push the current code location and appropriate handler location onto the
   // process's stack.
   // I'll make my own calling convention, with blackjack and hookers...
   PUSH(tf->eip);
+  PUSH(arg2);
+  PUSH(arg1);
   PUSH((uint)proc->handlers[sig]);
 
   // Have the process run the trampoline next time it is scheduled.
   tf->eip = (uint)proc->tramp;
 }
-

@@ -40,7 +40,7 @@ check_alarm(struct trapframe *tf)
   if(proc->next_alarm != 0 && proc->next_alarm <= ticks)
   {
     proc->next_alarm = 0;
-    sigrecieve(SIGALRM, tf);
+    sigrecieve(SIGALRM, tf, 0, 0);
   }
 }
 
@@ -98,7 +98,8 @@ trap(struct trapframe *tf)
               cpu->id, tf->eip, rcr2());
       panic("kernel pagefault");
     }
-    sigrecieve(SIGSEGV, tf);
+    // FIXME: pass usefull info in the arguments
+    sigrecieve(SIGSEGV, tf, 11, 44);
     break;
 
   //PAGEBREAK: 13

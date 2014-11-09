@@ -39,9 +39,18 @@ __tramp:
   movl %esp, %ebp
   # Save all the registers.
   pushal
+  # Copy the arguments to the top of the stack
+  # Holy confusing syntax Batman!
+  movl 12(, %ebp, 1), %ebx
+  pushl %ebx
+  movl 8(, %ebp, 1), %ebx
+  pushl %ebx
 
-  # Call the handler. It is located right below our base pointer.
+  # Call the handler.
   call *4(%ebp)
+
+  # Remove the arguments from the stack
+  addl $8, %esp
 
   # Restore all the registers
   popal
@@ -51,8 +60,8 @@ __tramp:
   popl %ebp
 
   # Since the handler address was between the base pointer and the return
-  # address, we need to skip over it.
-  addl $4, %esp
+  # address, we need to skip over it, along with the arguments
+  addl $12, %esp
 
   # All done.
   ret
