@@ -99,7 +99,7 @@ trap(struct trapframe *tf)
       panic("kernel pagefault");
     }
     // FIXME: pass usefull info in the arguments
-    sigrecieve(SIGSEGV, tf, 11, 44);
+    sigrecieve(SIGSEGV, tf, rcr2(), 44);
     break;
 
   //PAGEBREAK: 13
