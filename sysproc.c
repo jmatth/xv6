@@ -149,9 +149,10 @@ sys_mprotect(void)
 {
 
   extern int mprotect(pte_t *, uint, uint);
-  int addr;
+  int addr, addr_align;
   int len;
   int prot;
+  int res;
 
   argint(0, &addr);
   argint(1, &len);
@@ -159,9 +160,15 @@ sys_mprotect(void)
 
   pte_t *pgdir = proc->pgdir;
 
-  int res = mprotect(pgdir, (uint)addr, (uint)prot);
-  if(res < 0) {
-    return res;
+  addr_align = addr - (addr % PGSIZE);
+  while(addr_align <= addr + len - 1)
+  {
+    res = mprotect(pgdir, (uint)addr_align, (uint)prot);
+    if(res < 0) {
+      return res;
+    }
+    addr_align += PGSIZE;
   }
-  return mprotect(pgdir, (uint)(addr+len), (uint) prot);
+
+  return res;
 }
