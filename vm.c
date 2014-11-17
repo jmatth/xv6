@@ -391,12 +391,14 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
 
   switch(prot) {
     case PROT_NONE :
-      //FIXME
+      *pte = *pte & ~(PTE_P);
       break;
     case PROT_READ :
+      *pte = *pte | PTE_P;
       *pte = *pte & ~(PTE_W);
       break;
     case PROT_WRITE :
+      *pte = *pte | PTE_P;
       *pte = *pte | PTE_W;
       break;
   }
