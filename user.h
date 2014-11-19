@@ -28,6 +28,7 @@ int uptime(void);
 int signal(int, sighandler_t);
 int alarm(int);
 int mprotect(void*, int, int prot);
+char* dsbrk(int);
 
 // ulib.c
 int stat(char*, struct stat*);
@@ -40,6 +41,7 @@ char* gets(char*, int max);
 uint strlen(char*);
 void* memset(void*, int, uint);
 void* malloc(uint);
+void* mallocd(uint);
 void free(void*);
 int atoi(const char*);
 

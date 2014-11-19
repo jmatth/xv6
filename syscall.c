@@ -101,6 +101,7 @@ extern int sys_uptime(void);
 extern int sys_signal(void);
 extern int sys_alarm(void);
 extern int sys_mprotect(void);
+extern int sys_dsbrk(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,6 +128,7 @@ static int (*syscalls[])(void) = {
 [SYS_signal]  sys_signal,
 [SYS_alarm]   sys_alarm,
 [SYS_mprotect] sys_mprotect,
+[SYS_dsbrk]   sys_dsbrk,
 };
 
 void

@@ -133,6 +133,25 @@ growproc(int n)
   return 0;
 }
 
+// Grow current process's memory by n bytes.
+// Return 0 on success, -1 on failure.
+int
+growprocd(int n)
+{
+  uint sz;
+  
+  sz = proc->sz;
+  if(n > 0){
+    if((sz = allocuvmd(proc->pgdir, sz, sz + n)) == 0)
+      return -1;
+    cprintf("Done with allocuvmd\n");
+  } else if(n < 0){
+    if((sz = deallocuvm(proc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  }
+  proc->allocsz = sz;
+  return 0;
+}
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.

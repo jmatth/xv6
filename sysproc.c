@@ -58,6 +58,20 @@ sys_sbrk(void)
 }
 
 int
+sys_dsbrk(void)
+{
+  int addr;
+  int n;
+
+  if(argint(0, &n) < 0)
+    return -1;
+  addr = proc->sz;
+  if(growprocd(n) < 0)
+    return -1;
+  return addr;
+}
+
+int
 sys_sleep(void)
 {
   int n;

@@ -179,6 +179,7 @@ UPROGS=\
 	_signal_cost\
 	_test_sigalrm\
   _testmprotect\
+  _testdsbrk\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

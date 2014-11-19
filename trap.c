@@ -98,8 +98,25 @@ trap(struct trapframe *tf)
               cpu->id, tf->eip, rcr2());
       panic("kernel pagefault");
     }
+    int cr2 = rcr2();
+    if(cr2 >= proc->sz && cr2 < proc->allocsz)
+    {
+      char *mem = kalloc();
+      if(mem == 0)
+      {
+        cprintf("Out of memory\n");
+        break;
+      }
+      uint a = PGROUNDDOWN(cr2);
+      memset(mem, 0, PGSIZE);
+      mappages(proc->pgdir, (char *)a, PGSIZE, v2p(mem), PTE_W|PTE_U);
+      ftlb(0);
+      proc->sz += PGSIZE;
+      switchuvm(proc);
+      break;
+    }
     // FIXME: pass usefull info in the arguments
-    sigrecieve(SIGSEGV, tf, rcr2(), 44);
+    sigrecieve(SIGSEGV, tf, cr2, 44);
     break;
 
   //PAGEBREAK: 13
