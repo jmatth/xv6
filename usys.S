@@ -32,6 +32,7 @@ SYSCALL(uptime)
 SYSCALL(alarm)
 SYSCALL(mprotect)
 SYSCALL(dsbrk)
+SYSCALL(cowfork)
 
 .globl __tramp
 __tramp:

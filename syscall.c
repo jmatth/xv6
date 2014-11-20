@@ -102,6 +102,7 @@ extern int sys_signal(void);
 extern int sys_alarm(void);
 extern int sys_mprotect(void);
 extern int sys_dsbrk(void);
+extern int sys_cowfork(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -129,6 +130,7 @@ static int (*syscalls[])(void) = {
 [SYS_alarm]   sys_alarm,
 [SYS_mprotect] sys_mprotect,
 [SYS_dsbrk]   sys_dsbrk,
+[SYS_cowfork] sys_cowfork,
 };
 
 void

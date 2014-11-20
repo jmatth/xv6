@@ -29,6 +29,7 @@ int signal(int, sighandler_t);
 int alarm(int);
 int mprotect(void*, int, int prot);
 char* dsbrk(int);
+int cowfork(void);
 
 // ulib.c
 int stat(char*, struct stat*);

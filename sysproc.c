@@ -186,3 +186,9 @@ sys_mprotect(void)
 
   return res;
 }
+
+int
+sys_cowfork(void)
+{
+  return 0;
+}

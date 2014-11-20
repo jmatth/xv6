@@ -24,3 +24,4 @@
 #define SYS_alarm  23
 #define SYS_mprotect  24
 #define SYS_dsbrk  25
+#define SYS_cowfork 26
