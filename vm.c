@@ -349,6 +349,26 @@ bad:
   return 0;
 }
 
+// Given a parent process's page table, create a copy
+// of it for a child.
+pde_t*
+cowuvm(pde_t *pgdir, uint sz)
+{
+  pde_t *d;
+  pte_t *pte;
+  uint i;
+
+  if((d = setupkvm()) == 0)
+    return 0;
+  for(i = 0; i < sz; i += PGSIZE){
+    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+      panic("copyuvm: pte should exist");
+    if(!(*pte & PTE_P))
+      panic("copyuvm: page not present");
+  }
+  return d;
+}
+
 //PAGEBREAK!
 // Map user virtual address to kernel address.
 char*
@@ -414,6 +434,11 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
       *pte = *pte | PTE_P;
       *pte = *pte | PTE_W;
       break;
+    case PROT_COW :
+      *pte = *pte | PTE_COW;
+      break;
+    default :
+      return -1;
   }
   return 0;
 }

@@ -162,7 +162,6 @@ int
 sys_mprotect(void)
 {
 
-  extern int mprotect(pte_t *, uint, uint);
   int addr, addr_align;
   int len;
   int prot;

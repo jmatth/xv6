@@ -210,12 +210,19 @@ cowfork(void)
     return -1;
 
   // Copy process state from p.
-  np->pgdir = proc->pgdir;
-  for(i = 0; i <= PGROUNDUP(proc->sz); i+= PGSIZE)
-    mprotect(proc->pgdir, (void *)i, PROT_READ);
+  if((np->pgdir = cowuvm(proc->pgdir, proc->sz)) == 0){
+    np->kstack = 0;
+    np->state = UNUSED;
+    return -1;
+  }
   np->sz = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
+
+  for(i = 0; i < np->sz; i += PGSIZE) {
+    mprotect(proc->pgdir, (uint) i, PROT_COW);
+    mprotect(np->pgdir, (uint)i, PROT_COW);
+  }
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
