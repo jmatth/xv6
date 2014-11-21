@@ -222,6 +222,7 @@ cowfork(void)
   for(i = 0; i < np->sz; i += PGSIZE) {
     mprotect(proc->pgdir, (uint) i, PROT_COW);
     mprotect(np->pgdir, (uint)i, PROT_COW);
+    inccowref(i);
   }
 
   // Clear %eax so that fork returns 0 in the child.

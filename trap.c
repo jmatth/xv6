@@ -114,9 +114,10 @@ trap(struct trapframe *tf)
       proc->sz += PGSIZE;
       switchuvm(proc);
       break;
+    } else if (cowpage(proc->pgdir, (const void *)cr2) == -1) {
+      // FIXME: pass usefull info in the arguments
+      sigrecieve(SIGSEGV, tf, cr2, 44);
     }
-    // FIXME: pass usefull info in the arguments
-    sigrecieve(SIGSEGV, tf, cr2, 44);
     break;
 
   //PAGEBREAK: 13

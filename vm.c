@@ -6,6 +6,17 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "spinlock.h"
+
+struct pagerefcount{
+  uint pageaddr;
+  int  count;
+};
+
+struct {
+  struct spinlock lock;
+  struct pagerefcount refs[NPROC];
+} refcounts;
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -16,6 +27,7 @@ struct segdesc gdt[NSEGS];
 void
 seginit(void)
 {
+  int i;
   struct cpu *c;
 
   // Map "logical" addresses to virtual addresses using identity map.
@@ -37,6 +49,12 @@ seginit(void)
   // Initialize cpu-local storage.
   cpu = c;
   proc = 0;
+
+  // Initialize the cow reference counts
+  initlock(&refcounts.lock, "refcount");
+  for (i = 0; i < NPROC; i++) {
+    refcounts.refs[i].count = -1;
+  }
 }
 
 // Return the address of the PTE in page table pgdir
@@ -441,6 +459,84 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
       return -1;
   }
   return 0;
+}
+
+int
+cowpage(pde_t *pgdir, const void *va)
+{
+  pte_t *pte = walkpgdir(pgdir, va, 0);
+  if ((*pte & PTE_COW) != 0)
+  {
+    int i, do_copy;
+    uint pagestart;
+    struct pagerefcount *refs = 0;
+
+    do_copy = 0;
+    pagestart = (uint)PGROUNDDOWN((uint)va);
+
+    acquire(&refcounts.lock);
+    for (i = 0; i < NPROC; ++i)
+    {
+      if (refcounts.refs[i].pageaddr == pagestart)
+      {
+        refs = &refcounts.refs[i];
+        break;
+      }
+    }
+
+    if (refs != 0)
+    {
+      if (refs->count >= 2)
+      {
+        do_copy = 1;
+      }
+      refs->count -= 1;
+    }
+    release(&refcounts.lock);
+
+    if (do_copy)
+    {
+      char *mem = kalloc();
+      if (mem == 0)
+      {
+        panic("failed cow");
+      }
+      memmove(mem, (const void *)pagestart, PGSIZE);
+      mappages(proc->pgdir, (char *)pagestart, PGSIZE, v2p(mem), PTE_W|PTE_U);
+      ftlb();
+      switchuvm(proc);
+    }
+
+    *pte = (*pte & (~PTE_COW)) | PTE_W | PTE_P;
+
+    return 1;
+  }
+
+  return -1;
+}
+
+void
+inccowref(uint addr)
+{
+  int i;
+
+  acquire(&refcounts.lock);
+  for (i = 0; i < NPROC; i++) {
+    if (refcounts.refs[i].pageaddr == addr && refcounts.refs[i].count > 0) {
+      refcounts.refs[i].count++;
+      release(&refcounts.lock);
+      return;
+    }
+  }
+
+  for (i = 0; i < NPROC; i++) {
+    if (refcounts.refs[i].count <= 0) {
+      refcounts.refs[i].count = 2;
+      refcounts.refs[i].pageaddr = addr;
+      break;
+    }
+  }
+  release(&refcounts.lock);
 }
 
 //PAGEBREAK!
