@@ -385,6 +385,7 @@ cowuvm(pde_t *pgdir, uint sz)
       panic("copyuvm: pte should exist");
     if(!(*pte & PTE_P))
       panic("copyuvm: page not present");
+    mappages(d, (void *) i, PGSIZE, PTE_ADDR(*pte), PTE_FLAGS(*pte));
   }
   return d;
 }
