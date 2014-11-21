@@ -6,7 +6,9 @@ int
 main(int argc, char *argv[])
 {
   int i;
-  int pid = cowfork();
+  int pid;
+  printf(1, "i is at 0x%x\npid is at 0x%x\n", &i, &pid);
+  pid = cowfork();
   if(pid == 0)
   {
     i = 5;
