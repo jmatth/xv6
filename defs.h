@@ -185,6 +185,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 int             mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
 int             mprotect(pte_t *pgdir, uint va, uint prot);
 void            inccowref(uint);
+int             deccowref(uint);
 int             cowpage(pde_t*, const void *);
 
 // number of elements in fixed-size array

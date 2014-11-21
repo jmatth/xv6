@@ -45,7 +45,7 @@ seginit(void)
 
   lgdt(c->gdt, sizeof(c->gdt));
   loadgs(SEG_KCPU << 3);
-  
+
   // Initialize cpu-local storage.
   cpu = c;
   proc = 0;
@@ -289,14 +289,16 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
   a = PGROUNDUP(newsz);
   for(; a  < oldsz; a += PGSIZE){
     pte = walkpgdir(pgdir, (char*)a, 0);
-    if(!pte)
+    if(!pte) {
       a += (NPTENTRIES - 1) * PGSIZE;
-    else if((*pte & PTE_P) != 0){
-      pa = PTE_ADDR(*pte);
-      if(pa == 0)
-        panic("kfree");
-      char *v = p2v(pa);
-      kfree(v);
+    } else if((*pte & PTE_P) != 0){
+      if ((*pte & PTE_COW) == 0 || deccowref(a) <= 0) {
+        pa = PTE_ADDR(*pte);
+        if(pa == 0)
+          panic("kfree");
+        char *v = p2v(pa);
+        kfree(v);
+      }
       *pte = 0;
     }
   }
@@ -465,54 +467,58 @@ int
 cowpage(pde_t *pgdir, const void *va)
 {
   pte_t *pte = walkpgdir(pgdir, va, 0);
-  if ((*pte & PTE_COW) != 0)
-  {
-    int i, do_copy;
-    uint pagestart;
-    struct pagerefcount *refs = 0;
 
-    do_copy = 0;
-    pagestart = (uint)PGROUNDDOWN((uint)va);
-
-    acquire(&refcounts.lock);
-    for (i = 0; i < NPROC; ++i)
-    {
-      if (refcounts.refs[i].pageaddr == pagestart)
-      {
-        refs = &refcounts.refs[i];
-        break;
-      }
-    }
-
-    if (refs != 0)
-    {
-      if (refs->count >= 2)
-      {
-        do_copy = 1;
-      }
-      refs->count -= 1;
-    }
-    release(&refcounts.lock);
-
-    if (do_copy)
-    {
-      char *mem = kalloc();
-      if (mem == 0)
-      {
-        panic("failed cow");
-      }
-      memmove(mem, (const void *)pagestart, PGSIZE);
-      mappages(proc->pgdir, (char *)pagestart, PGSIZE, v2p(mem), PTE_W|PTE_U);
-      ftlb();
-      switchuvm(proc);
-    }
-
-    *pte = (*pte & (~PTE_COW)) | PTE_W | PTE_P;
-
-    return 1;
+  if (pte == 0) {
+    cprintf("pte is 0, cr2 is 0x%x\n", va);
+    return -1;
+  } else if ((*pte & PTE_COW) != 0) {
+    cprintf("cow bit not set");
+    return -1;
   }
 
-  return -1;
+  int i, do_copy;
+  uint pagestart;
+  struct pagerefcount *refs = 0;
+
+  do_copy = 0;
+  pagestart = (uint)PGROUNDDOWN((uint)va);
+
+  acquire(&refcounts.lock);
+  for (i = 0; i < NPROC; ++i)
+  {
+    if (refcounts.refs[i].pageaddr == pagestart)
+    {
+      refs = &refcounts.refs[i];
+      break;
+    }
+  }
+
+  if (refs != 0)
+  {
+    if (refs->count >= 2)
+    {
+      do_copy = 1;
+    }
+    refs->count -= 1;
+  }
+  release(&refcounts.lock);
+
+  if (do_copy)
+  {
+    char *mem = kalloc();
+    if (mem == 0)
+    {
+      panic("failed cow");
+    }
+    memmove(mem, (const void *)pagestart, PGSIZE);
+    mappages(proc->pgdir, (char *)pagestart, PGSIZE, v2p(mem), PTE_W|PTE_U);
+    ftlb();
+    switchuvm(proc);
+  }
+
+  *pte = (*pte & (~PTE_COW)) | PTE_W | PTE_P;
+
+  return 1;
 }
 
 void
@@ -537,6 +543,23 @@ inccowref(uint addr)
     }
   }
   release(&refcounts.lock);
+}
+
+int deccowref(uint addr)
+{
+  int i;
+  int count = -1;
+
+  acquire(&refcounts.lock);
+  for (i = 0; i < NPROC; i++) {
+    if (refcounts.refs[i].pageaddr == addr && refcounts.refs[i].count > 0) {
+      refcounts.refs[i].count--;
+      count = refcounts.refs[i].count;
+      break;
+    }
+  }
+  release(&refcounts.lock);
+  return count;
 }
 
 //PAGEBREAK!
