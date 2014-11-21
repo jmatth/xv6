@@ -9,13 +9,15 @@ main(int argc, char *argv[])
   int pid;
   printf(1, "i is at 0x%x\npid is at 0x%x\n", &i, &pid);
   pid = cowfork();
+  i = 3;
   if(pid == 0)
   {
     i = 5;
-  } else {
-    i = 3;
+    printf(1, "I think i'm in the child, and i is %d\n", i);
     exit();
   }
-  printf(1, "I is %d\n", i);
+
+  wait();
+  printf(1, "I think i'm in the parent and i is %d\n", i);
   exit();
 }
