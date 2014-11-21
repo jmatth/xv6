@@ -190,5 +190,5 @@ sys_mprotect(void)
 int
 sys_cowfork(void)
 {
-  return 0;
+  return cowfork();
 }
