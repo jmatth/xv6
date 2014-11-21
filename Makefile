@@ -180,6 +180,7 @@ UPROGS=\
 	_test_sigalrm\
   _testmprotect\
   _testdsbrk\
+  _testcow\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
