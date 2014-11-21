@@ -497,8 +497,12 @@ cowpage(pde_t *pgdir, const void *va)
       do_copy = 1;
     }
     refs->count -= 1;
+  } else {
+    release(&refcounts.lock);
+    return -1;
   }
   release(&refcounts.lock);
+
 
   if (do_copy)
   {
