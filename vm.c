@@ -90,14 +90,14 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 {
   char *a, *last;
   pte_t *pte;
-  
+
   a = (char*)PGROUNDDOWN((uint)va);
   last = (char*)PGROUNDDOWN(((uint)va) + size - 1);
   for(;;){
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
-    if((*pte & PTE_P) && !(*pte * PTE_COW))
-      panic("remap");
+    /* if(*pte & PTE_P) */
+    /*   panic("remap"); */
     *pte = pa | perm | PTE_P;
     if(a == last)
       break;
@@ -292,7 +292,8 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     if(!pte) {
       a += (NPTENTRIES - 1) * PGSIZE;
     } else if((*pte & PTE_P) != 0){
-      if ((*pte & PTE_COW) == 0 || deccowref(a) <= 0) {
+      /* if ((*pte & PTE_COW) == 0 || deccowref(a) <= 0) { */
+      if (deccowref(a) <= 0) {
         pa = PTE_ADDR(*pte);
         if(pa == 0)
           panic("kfree");
@@ -375,19 +376,11 @@ pde_t*
 cowuvm(pde_t *pgdir, uint sz)
 {
   pde_t *d;
-  pte_t *pte;
-  uint i;
 
   if((d = setupkvm()) == 0)
     return 0;
-  for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
-      panic("copyuvm: pte should exist");
-    if(!(*pte & PTE_P))
-      panic("copyuvm: page not present");
-    mprotect(pgdir, (uint) i, PROT_COW);
-    mappages(d, (void *) i, PGSIZE, PTE_ADDR(*pte), PTE_FLAGS(*pte));
-  }
+  memmove(d, pgdir, KERNBASE);
+  ftlb();
   return d;
 }
 
@@ -468,15 +461,17 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
 int
 cowpage(pde_t *pgdir, const void *va)
 {
+  cprintf("in cowpage...\n");
   pte_t *pte = walkpgdir(pgdir, va, 0);
 
   if (pte == 0) {
     cprintf("pte is 0, cr2 is 0x%x\n", va);
     return -1;
-  } else if ((*pte & PTE_COW) != 0) {
-    cprintf("cow bit not set");
-    return -1;
   }
+  /* } else if ((*pte & PTE_COW) == 0) { */
+  /*   cprintf("cow bit not set\n"); */
+  /*   return -1; */
+  /* } */
 
   int i, do_copy;
   uint pagestart;
@@ -495,7 +490,7 @@ cowpage(pde_t *pgdir, const void *va)
     }
   }
 
-  if (refs != 0)
+  if (refs > 0)
   {
     if (refs->count >= 2)
     {
@@ -507,6 +502,7 @@ cowpage(pde_t *pgdir, const void *va)
 
   if (do_copy)
   {
+    cprintf("doing copy...\n");
     char *mem = kalloc();
     if (mem == 0)
     {
@@ -518,8 +514,12 @@ cowpage(pde_t *pgdir, const void *va)
     switchuvm(proc);
   }
 
-  *pte = (*pte & (~PTE_COW)) | PTE_W | PTE_P;
+  cprintf("pte was: 0x%x\n", *pte);
+  /* *pte = (*pte & (~PTE_COW)) | PTE_W | PTE_P; */
+  *pte = *pte & (PTE_W | PTE_P);
+  ftlb();
 
+  cprintf("pte is: 0x%x\n", *pte);
   return 1;
 }
 
