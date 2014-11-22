@@ -144,7 +144,6 @@ growprocd(int n)
   if(n > 0){
     if((sz = allocuvmd(proc->pgdir, sz, sz + n)) == 0)
       return -1;
-    cprintf("Done with allocuvmd\n");
   } else if(n < 0){
     if((sz = deallocuvm(proc->pgdir, sz, sz + n)) == 0)
       return -1;

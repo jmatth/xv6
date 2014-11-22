@@ -53,7 +53,7 @@ endif
 
 # If the makefile can't find QEMU, specify its path here
 ifndef QEMU
-QEMU = /ilab/users/wkatsak/qemu-1.7.0/i386-softmmu/qemu-system-i386
+QEMU = /ilab/users/wkatsak/qemu-1.7.0/i386-softmmu/qemu-system-i386 -nographic
 endif
 
 # Try to infer the correct QEMU
@@ -179,7 +179,7 @@ UPROGS=\
 	_signal_cost\
 	_test_sigalrm\
   _testmprotect\
-  _testdsbrk\
+  _testdemandalloc\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
