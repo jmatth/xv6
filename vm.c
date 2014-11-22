@@ -379,7 +379,7 @@ cowuvm(pde_t *pgdir, uint sz)
 
   if((d = setupkvm()) == 0)
     return 0;
-  memmove(d, pgdir, KERNBASE);
+  memmove(d, pgdir, sz);
   ftlb();
   return d;
 }
@@ -461,8 +461,11 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
 int
 cowpage(pde_t *pgdir, const void *va)
 {
-  cprintf("in cowpage...\n");
+  uint pteaddr;
+
+  cprintf("in cowpage, pid %d...\n", proc->pid);
   pte_t *pte = walkpgdir(pgdir, va, 0);
+  pteaddr = PTE_ADDR(*pte);
 
   if (pte == 0) {
     cprintf("pte is 0, cr2 is 0x%x\n", va);
@@ -483,9 +486,10 @@ cowpage(pde_t *pgdir, const void *va)
   acquire(&refcounts.lock);
   for (i = 0; i < NPROC; ++i)
   {
-    if (refcounts.refs[i].pageaddr == pagestart)
+    if (refcounts.refs[i].pageaddr == pteaddr && refcounts.refs[i].count > 0)
     {
       refs = &refcounts.refs[i];
+      cprintf("found right ref, count is %d\n", refs->count);
       break;
     }
   }
@@ -498,11 +502,11 @@ cowpage(pde_t *pgdir, const void *va)
     }
     refs->count -= 1;
   } else {
+    cprintf("refcount <=0, old count\n");
     release(&refcounts.lock);
     return -1;
   }
   release(&refcounts.lock);
-
 
   if (do_copy)
   {
@@ -512,18 +516,20 @@ cowpage(pde_t *pgdir, const void *va)
     {
       panic("failed cow");
     }
+    /* cprintf("...memmove\n"); */
     memmove(mem, (const void *)pagestart, PGSIZE);
+    /* cprintf("...mappages\n"); */
     mappages(proc->pgdir, (char *)pagestart, PGSIZE, v2p(mem), PTE_W|PTE_U);
+    /* cprintf("...ftlb\n"); */
     ftlb();
+    /* cprintf("...switchuvm\n"); */
     switchuvm(proc);
+  } else {
+    cprintf("last cow...\n");
+    *pte = *pte | PTE_W | PTE_P;
+    ftlb();
   }
 
-  cprintf("pte was: 0x%x\n", *pte);
-  /* *pte = (*pte & (~PTE_COW)) | PTE_W | PTE_P; */
-  *pte = *pte & (PTE_W | PTE_P);
-  ftlb();
-
-  cprintf("pte is: 0x%x\n", *pte);
   return 1;
 }
 
@@ -531,10 +537,19 @@ void
 inccowref(uint addr)
 {
   int i;
+  uint pteaddr;
+  pte_t *pte;
+
+  cprintf("in inccowref\n");
+
+  pte = walkpgdir(proc->pgdir, (void*)addr, 0);
+  if (pte == 0)
+    panic("missing pte in inccowref");
+  pteaddr = PTE_ADDR(*pte);
 
   acquire(&refcounts.lock);
   for (i = 0; i < NPROC; i++) {
-    if (refcounts.refs[i].pageaddr == addr && refcounts.refs[i].count > 0) {
+    if (refcounts.refs[i].pageaddr == pteaddr && refcounts.refs[i].count > 0) {
       refcounts.refs[i].count++;
       release(&refcounts.lock);
       return;
@@ -544,7 +559,7 @@ inccowref(uint addr)
   for (i = 0; i < NPROC; i++) {
     if (refcounts.refs[i].count <= 0) {
       refcounts.refs[i].count = 2;
-      refcounts.refs[i].pageaddr = addr;
+      refcounts.refs[i].pageaddr = pteaddr;
       break;
     }
   }
@@ -554,11 +569,18 @@ inccowref(uint addr)
 int deccowref(uint addr)
 {
   int i;
+  uint pteaddr;
+  pte_t *pte;
   int count = -1;
+
+  pte = walkpgdir(proc->pgdir, (void*)addr, 0);
+  if (pte == 0)
+    panic("missing pte in deccowref");
+  pteaddr = PTE_ADDR(*pte);
 
   acquire(&refcounts.lock);
   for (i = 0; i < NPROC; i++) {
-    if (refcounts.refs[i].pageaddr == addr && refcounts.refs[i].count > 0) {
+    if (refcounts.refs[i].pageaddr == pteaddr && refcounts.refs[i].count > 0) {
       refcounts.refs[i].count--;
       count = refcounts.refs[i].count;
       break;
