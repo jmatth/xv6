@@ -77,7 +77,8 @@ sys_sleep(void)
   int n;
   int remaining;
   uint ticks0;
-  
+
+  cprintf("sleeping in %d...\n", proc->pid);
   if(argint(0, &n) < 0)
     return -1;
   acquire(&tickslock);

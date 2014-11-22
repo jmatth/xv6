@@ -15,12 +15,10 @@ main(int argc, char *argv[])
   {
     i = 5;
     printf(1, "I think i'm in the child, and i is %d\n", i);
-    while(1)
-      sleep(100);
+    exit();
   }
 
+  wait();
   printf(1, "I think i'm in the parent and i is %d\n", i);
-  while(1)
-    sleep(100);
   exit();
 }

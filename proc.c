@@ -144,7 +144,6 @@ growprocd(int n)
   if(n > 0){
     if((sz = allocuvmd(proc->pgdir, sz, sz + n)) == 0)
       return -1;
-    cprintf("Done with allocuvmd\n");
   } else if(n < 0){
     if((sz = deallocuvm(proc->pgdir, sz, sz + n)) == 0)
       return -1;
@@ -211,6 +210,7 @@ cowfork(void)
 
   // Copy process state from p.
   if((np->pgdir = cowuvm(proc->pgdir, proc->sz)) == 0){
+    kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
@@ -253,8 +253,6 @@ exit(void)
   struct proc *p;
   int fd;
 
-  cprintf("start exit\n");
-
   if(proc == initproc)
     panic("init exiting");
 
@@ -287,7 +285,6 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   proc->state = ZOMBIE;
-  cprintf("end exit\n");
   sched();
   panic("zombie exit");
 }
@@ -300,8 +297,6 @@ wait(void)
   struct proc *p;
   int havekids, pid;
 
-  cprintf("start wait\n");
-
   acquire(&ptable.lock);
   for(;;){
     // Scan through table looking for zombie children.
@@ -312,7 +307,6 @@ wait(void)
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
-        /* cprintf("ound zombie child %d\n", p->pid); */
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;

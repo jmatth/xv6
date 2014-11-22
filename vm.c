@@ -376,11 +376,18 @@ pde_t*
 cowuvm(pde_t *pgdir, uint sz)
 {
   pde_t *d;
+  int i;
+  pte_t *pte;
 
   if((d = setupkvm()) == 0)
     return 0;
-  memmove(d, pgdir, sz);
-  ftlb();
+  for(i = 0; i < sz; i += PGSIZE){
+    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+      panic("cowuvm: pte should exist");
+    if(!(*pte & PTE_P))
+      panic("cowuvm: page not present");
+    mappages(d, (void *) i, PGSIZE, PTE_ADDR(*pte), PTE_P | PTE_COW | PTE_U);
+  }
   return d;
 }
 
@@ -463,12 +470,10 @@ cowpage(pde_t *pgdir, const void *va)
 {
   uint pteaddr;
 
-  cprintf("in cowpage, pid %d...\n", proc->pid);
   pte_t *pte = walkpgdir(pgdir, va, 0);
   pteaddr = PTE_ADDR(*pte);
 
   if (pte == 0) {
-    cprintf("pte is 0, cr2 is 0x%x\n", va);
     return -1;
   }
   /* } else if ((*pte & PTE_COW) == 0) { */
@@ -489,7 +494,6 @@ cowpage(pde_t *pgdir, const void *va)
     if (refcounts.refs[i].pageaddr == pteaddr && refcounts.refs[i].count > 0)
     {
       refs = &refcounts.refs[i];
-      cprintf("found right ref, count is %d\n", refs->count);
       break;
     }
   }
@@ -502,7 +506,6 @@ cowpage(pde_t *pgdir, const void *va)
     }
     refs->count -= 1;
   } else {
-    cprintf("refcount <=0, old count\n");
     release(&refcounts.lock);
     return -1;
   }
@@ -510,22 +513,16 @@ cowpage(pde_t *pgdir, const void *va)
 
   if (do_copy)
   {
-    cprintf("doing copy...\n");
     char *mem = kalloc();
     if (mem == 0)
     {
       panic("failed cow");
     }
-    /* cprintf("...memmove\n"); */
     memmove(mem, (const void *)pagestart, PGSIZE);
-    /* cprintf("...mappages\n"); */
     mappages(proc->pgdir, (char *)pagestart, PGSIZE, v2p(mem), PTE_W|PTE_U);
-    /* cprintf("...ftlb\n"); */
     ftlb();
-    /* cprintf("...switchuvm\n"); */
     switchuvm(proc);
   } else {
-    cprintf("last cow...\n");
     *pte = *pte | PTE_W | PTE_P;
     ftlb();
   }
@@ -539,8 +536,6 @@ inccowref(uint addr)
   int i;
   uint pteaddr;
   pte_t *pte;
-
-  cprintf("in inccowref\n");
 
   pte = walkpgdir(proc->pgdir, (void*)addr, 0);
   if (pte == 0)
