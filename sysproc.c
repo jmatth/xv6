@@ -160,7 +160,7 @@ sys_mprotect(void)
 
   pte_t *pgdir = proc->pgdir;
 
-  addr_align = addr - (addr % PGSIZE);
+  addr_align = PGROUNDDOWN(addr - 1);
   while(addr_align <= addr + len - 1)
   {
     res = mprotect(pgdir, (uint)addr_align, (uint)prot);
