@@ -28,6 +28,7 @@ int uptime(void);
 int signal(int, sighandler_t);
 int alarm(int);
 int mprotect(void*, int, int prot);
+int mmap(void *addr, uint length, int prot, int flags, int fd, uint offset);
 
 // ulib.c
 int stat(char*, struct stat*);

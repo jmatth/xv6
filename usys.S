@@ -31,6 +31,7 @@ SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(alarm)
 SYSCALL(mprotect)
+SYSCALL(mmap)
 
 .globl __tramp
 __tramp:
