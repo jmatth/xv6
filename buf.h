@@ -7,6 +7,7 @@ struct buf {
   struct buf *qnext; // disk queue
   uchar buf[512];
   uchar *data;
+  uint mmap_offset;
 };
 #define B_BUSY  0x1  // buffer is locked by some process
 #define B_VALID 0x2  // buffer has been read from disk
