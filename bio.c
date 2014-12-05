@@ -50,6 +50,7 @@ binit(void)
     b->next = bcache.head.next;
     b->prev = &bcache.head;
     b->dev = -1;
+    b->data = b->buf;
     bcache.head.next->prev = b;
     bcache.head.next = b;
   }
@@ -87,6 +88,7 @@ bget(uint dev, uint sector)
       b->dev = dev;
       b->sector = sector;
       b->flags = B_BUSY;
+      b->data = b->buf;
       release(&bcache.lock);
       return b;
     }
