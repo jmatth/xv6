@@ -8,6 +8,7 @@
 #include "traps.h"
 #include "spinlock.h"
 #include "signal2.h"
+#include "buf.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -98,8 +99,18 @@ trap(struct trapframe *tf)
               cpu->id, tf->eip, rcr2());
       panic("kernel pagefault");
     }
-    // FIXME: pass usefull info in the arguments
-    sigrecieve(SIGSEGV, tf, rcr2(), tf->err);
+    // was it mmaped?
+    if (checkprot(proc->pgdir, rcr2(), PROT_MMAP)) {
+      struct buf *b;
+      while((b = bfindmmap((uchar*)rcr2())) != 0) {
+        b->flags |= B_DIRTY;
+        brelse(b);
+      }
+      mprotect(proc->pgdir, PGROUNDDOWN(rcr2()), PROT_WRITE);
+    } else {
+      sigrecieve(SIGSEGV, tf, rcr2(), tf->err);
+    }
+
     break;
 
   //PAGEBREAK: 13

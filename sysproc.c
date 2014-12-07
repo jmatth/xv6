@@ -148,7 +148,6 @@ int
 sys_mprotect(void)
 {
 
-  extern int mprotect(pte_t *, uint, uint);
   int addr, addr_align;
   int len;
   int prot;
@@ -157,6 +156,9 @@ sys_mprotect(void)
   argint(0, &addr);
   argint(1, &len);
   argint(2, &prot);
+
+  // Sanitize prot
+  prot = prot & (PROT_NONE | PROT_READ | PROT_WRITE);
 
   pte_t *pgdir = proc->pgdir;
 

@@ -98,6 +98,33 @@ bget(uint dev, uint sector)
   panic("bget: no buffers");
 }
 
+struct buf*
+bfindmmap(uchar *addr)
+{
+  struct buf *b;
+
+  addr = (uchar*)PGROUNDDOWN((uint)addr);
+
+  acquire(&bcache.lock);
+
+ loop:
+  // Is the sector already cached?
+  for(b = bcache.head.next; b != &bcache.head; b = b->next){
+    if(PGROUNDDOWN((uint)b->data) == (uint)addr && !(b->flags & B_BUSY)){
+      if(!(b->flags & B_BUSY)){
+        b->flags |= B_BUSY;
+        release(&bcache.lock);
+        return b;
+      }
+      sleep(b, &bcache.lock);
+      goto loop;
+    }
+  }
+
+  release(&bcache.lock);
+  return 0;
+}
+
 void bclearmmap(uchar* v) {
   struct buf *b;
   uchar *ptr;

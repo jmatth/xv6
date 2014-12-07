@@ -15,6 +15,7 @@ struct buf*     bread(uint, uint);
 void            bclearmmap(uchar*);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
+struct buf*     bfindmmap(uchar*);
 
 // console.c
 void            consoleinit(void);
@@ -180,6 +181,8 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
+int             mprotect(uint *, uint, uint);
+int             checkprot(uint *, uint, uint);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

@@ -389,21 +389,40 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
   if((*pte & PTE_U) == 0)
     return -1;
 
-  switch(prot) {
-    case PROT_NONE :
-      *pte = *pte & ~(PTE_P);
-      break;
-    case PROT_READ :
+  // Sanitize prot again
+  prot = prot & (PROT_NONE | PROT_READ | PROT_WRITE | PROT_MMAP);
+
+  if (prot == PROT_NONE) {
+    *pte = *pte & ~(PTE_P);
+  } else {
+    if (prot & PROT_READ) {
       *pte = *pte | PTE_P;
       *pte = *pte & ~(PTE_W);
-      break;
-    case PROT_WRITE :
+    }
+    if (prot & PROT_WRITE) {
       *pte = *pte | PTE_P;
       *pte = *pte | PTE_W;
-      break;
+    }
+    if (prot & PROT_MMAP) {
+      *pte |= PROT_MMAP;
+    }
   }
+
   return 0;
 }
+
+int checkprot(pte_t *pgdir, uint va, uint prot)
+{
+  pte_t *pte;
+
+  va = PGROUNDDOWN(va);
+  pte = walkpgdir(pgdir, (const void*) va, 0);
+  if (pte == 0)
+    return -1;
+
+  return *pte & prot;
+}
+
 
 //PAGEBREAK!
 // Blank page.

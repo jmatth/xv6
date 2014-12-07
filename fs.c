@@ -678,6 +678,7 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     bp->flags |= B_MMAP;
     bp->data = (uchar*)uva2ka(proc->pgdir, dst);
     brelse(bp);
+    mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_READ | PROT_MMAP));
   }
   return n;
 }
