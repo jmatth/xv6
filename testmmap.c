@@ -30,5 +30,7 @@ int main(int argc, char *argv[])
   printf(1, fread);
   printf(1, "\n\n");
 
+  close(fd);
+
   exit();
 }
