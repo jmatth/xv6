@@ -25,6 +25,8 @@
 #include "param.h"
 #include "spinlock.h"
 #include "buf.h"
+#include "mmu.h"
+#include "fs.h"
 
 struct {
   struct spinlock lock;
@@ -96,6 +98,27 @@ bget(uint dev, uint sector)
   panic("bget: no buffers");
 }
 
+void bclearmmap(uchar* v) {
+  struct buf *b;
+  uchar *ptr;
+  int i;
+
+  acquire(&bcache.lock);
+
+  // Is the sector already cached?
+  for(b = bcache.head.next; b != &bcache.head; b = b->next) {
+    for(ptr = v, i = 0; i < PGSIZE / BSIZE; v += BSIZE, i++) {
+      if(b->data == ptr) {
+        b->flags = 0x0;
+        b->data = b->buf;
+        break;
+      }
+    }
+  }
+
+  release(&bcache.lock);
+}
+
 // Return a B_BUSY buf with the contents of the indicated disk sector.
 struct buf*
 bread(uint dev, uint sector)
@@ -107,18 +130,6 @@ bread(uint dev, uint sector)
     iderw(b);
   return b;
 }
-
-/* struct buf* */
-/* balloc_mmap(uint dev, uchar *ptr) */
-/* { */
-/*   struct buf *b; */
-/*  */
-/*   b = bget(dev, sector); */
-/*   b->flags |= B_MMAP; */
-/*   b->data = ptr; */
-/*  */
-/*   return b; */
-/* } */
 
 // Write b's contents to disk.  Must be B_BUSY.
 void

@@ -67,8 +67,13 @@ kfree(char *v)
   // Fill with junk to catch dangling refs.
   memset(v, 1, PGSIZE);
 
-  if(kmem.use_lock)
+  if(kmem.use_lock) {
     acquire(&kmem.lock);
+
+    // Clear any buffer caches that were mmaped to this address
+    bclearmmap((uchar*)v);
+  }
+
   r = (struct run*)v;
   r->next = kmem.freelist;
   kmem.freelist = r;

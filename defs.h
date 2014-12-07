@@ -12,7 +12,7 @@ struct superblock;
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
-struct buf*     balloc_mmap(uint, uchar*);
+void            bclearmmap(uchar*);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
 
