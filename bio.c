@@ -84,7 +84,7 @@ bget(uint dev, uint sector)
   // "clean" because B_DIRTY and !B_BUSY means log.c
   // hasn't yet committed the changes to the buffer.
   for(b = bcache.head.prev; b != &bcache.head; b = b->prev){
-    if((b->flags & B_BUSY) == 0 && (b->flags & B_DIRTY) == 0){
+    if((b->flags & B_BUSY) == 0 && (b->flags & B_DIRTY) == 0 && (b->flags & B_MMAP) == 0){
       b->dev = dev;
       b->sector = sector;
       b->flags = B_BUSY;
@@ -107,6 +107,18 @@ bread(uint dev, uint sector)
     iderw(b);
   return b;
 }
+
+/* struct buf* */
+/* balloc_mmap(uint dev, uchar *ptr) */
+/* { */
+/*   struct buf *b; */
+/*  */
+/*   b = bget(dev, sector); */
+/*   b->flags |= B_MMAP; */
+/*   b->data = ptr; */
+/*  */
+/*   return b; */
+/* } */
 
 // Write b's contents to disk.  Must be B_BUSY.
 void

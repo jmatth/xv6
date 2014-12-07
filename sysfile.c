@@ -444,5 +444,26 @@ sys_pipe(void)
 int
 sys_mmap(void)
 {
+  char *addr;
+  int length;
+  int prot;
+  int flags;
+  struct file *f;
+  int offset;
+
+  cprintf("start sys_mmap\n");
+
+  argint(0, (int*)&addr);
+  argint(1, &length);
+  argint(2, &prot);
+  argint(3, &flags);
+  argfd(4, 0, &f);
+  argint(5, &offset);
+
+  begin_op();
+  mmap(addr, length, prot, flags, f, offset);
+  end_op();
+
+  cprintf("end sys_mmap\n");
   return 0;
 }

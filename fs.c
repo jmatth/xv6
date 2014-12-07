@@ -651,3 +651,33 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
+{
+  uint tot, m;
+  struct buf *bp;
+  struct inode *ip;
+
+  ip = f->ip;
+
+  if(ip->type == T_DEV){
+    if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
+      return -1;
+    return devsw[ip->major].read(ip, dst, n);
+  }
+
+  if(off > ip->size || off + n < off)
+    return -1;
+  if(off + n > ip->size)
+    n = ip->size - off;
+
+  for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
+    bp = bread(ip->dev, bmap(ip, off/BSIZE));
+    m = min(n - tot, BSIZE - off%BSIZE);
+    memmove(dst, bp->data + off%BSIZE, m);
+    bp->flags |= B_MMAP;
+    bp->data = (uchar*)dst;
+    brelse(bp);
+  }
+  return n;
+}

@@ -12,6 +12,7 @@ struct superblock;
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
+struct buf*     balloc_mmap(uint, uchar*);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
 
@@ -32,6 +33,7 @@ void            fileinit(void);
 int             fileread(struct file*, char*, int n);
 int             filestat(struct file*, struct stat*);
 int             filewrite(struct file*, char*, int n);
+int             mmap(char*, int, int, int, struct file*, int);
 
 // fs.c
 void            readsb(int dev, struct superblock *sb);
