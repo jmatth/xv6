@@ -8,6 +8,9 @@
 #include "fs.h"
 #include "file.h"
 #include "spinlock.h"
+#include "buf.h"
+#include "mmu.h"
+#include "proc.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -56,6 +59,29 @@ void
 fileclose(struct file *f)
 {
   struct file ff;
+  struct buf *b;
+  pte_t *pte;
+  uint a;
+  uchar *k;
+
+  // flush mmaped stuff
+  a = PGROUNDUP(0);
+  for(; a  < proc->sz; a += PGSIZE){
+    pte = walkpgdir(proc->pgdir, (char*)a, 0);
+    if(!pte)
+      a+= (NPTENTRIES - 1) * PGSIZE;
+    else if(*pte & (PROT_MMAP | PTE_P)) {
+      k = (uchar*)uva2ka(proc->pgdir, (char*)a);
+      while((b = bfindmmap((uchar*)k, 0)) != 0) {
+        // FIXME: flush to disk if dirty
+        b->flags = 0x0 | B_BUSY;
+        b->data = b->buf;
+        b->dev = -1;
+        b->sector = -1;
+        brelse(b);
+      }
+    }
+  }
 
   acquire(&ftable.lock);
   if(f->ref < 1)
@@ -68,7 +94,7 @@ fileclose(struct file *f)
   f->ref = 0;
   f->type = FD_NONE;
   release(&ftable.lock);
-  
+
   if(ff.type == FD_PIPE)
     pipeclose(ff.pipe, ff.writable);
   else if(ff.type == FD_INODE){
