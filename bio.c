@@ -110,7 +110,7 @@ bfindmmap(uchar *addr)
  loop:
   // Is the sector already cached?
   for(b = bcache.head.next; b != &bcache.head; b = b->next){
-    if(PGROUNDDOWN((uint)b->data) == (uint)addr && !(b->flags & B_BUSY)){
+    if(PGROUNDDOWN((uint)b->data) == (uint)addr && !(b->flags & B_DIRTY)){
       if(!(b->flags & B_BUSY)){
         b->flags |= B_BUSY;
         release(&bcache.lock);
