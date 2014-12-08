@@ -73,7 +73,16 @@ fileclose(struct file *f)
     else if(*pte & (PROT_MMAP | PTE_P)) {
       k = (uchar*)uva2ka(proc->pgdir, (char*)a);
       while((b = bfindmmap((uchar*)k, 0)) != 0) {
-        // FIXME: flush to disk if dirty
+        // FIXME: make this more efficient
+        if(b->flags & B_DIRTY)
+        {
+          begin_op();
+          log_write(b);
+          brelse(b);
+          end_op();
+          continue;
+        }
+
         b->flags = 0x0 | B_BUSY;
         b->data = b->buf;
         b->dev = -1;
