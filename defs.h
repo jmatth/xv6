@@ -15,7 +15,7 @@ struct buf*     bread(uint, uint);
 void            bclearmmap(uchar*);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
-struct buf*     bfindmmap(uchar*);
+struct buf*     bfindmmap(uchar*, int);
 
 // console.c
 void            consoleinit(void);

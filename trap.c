@@ -102,7 +102,7 @@ trap(struct trapframe *tf)
     // was it mmaped?
     if (checkprot(proc->pgdir, rcr2(), PROT_MMAP)) {
       struct buf *b;
-      while((b = bfindmmap((uchar*)uva2ka(proc->pgdir, (char*)rcr2()))) != 0) {
+      while((b = bfindmmap((uchar*)uva2ka(proc->pgdir, (char*)rcr2()), 1)) != 0) {
         b->flags |= B_DIRTY;
         brelse(b);
       }

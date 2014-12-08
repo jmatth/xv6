@@ -267,7 +267,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       // flush mmaped stuff
       if(*pte & PROT_MMAP) {
         k = (uchar*)uva2ka(pgdir, (char*)a);
-        while((b = bfindmmap((uchar*)k)) != 0) {
+        while((b = bfindmmap((uchar*)k, 0)) != 0) {
           // FIXME: flush to disk if dirty
           b->flags = 0x0 | B_BUSY;
           b->data = b->buf;
