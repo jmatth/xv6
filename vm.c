@@ -393,7 +393,7 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
   // Sanitize prot again
   prot = prot & (PROT_NONE | PROT_READ | PROT_WRITE | PROT_MMAP);
 
-  if (prot == PROT_NONE) {
+  if (prot & PROT_NONE) {
     *pte = *pte & ~(PTE_P);
   } else {
     if (prot & PROT_READ) {
@@ -404,9 +404,9 @@ int mprotect(pte_t *pgdir, uint va, uint prot)
       *pte = *pte | PTE_P;
       *pte = *pte | PTE_W;
     }
-    if (prot & PROT_MMAP) {
-      *pte |= PROT_MMAP;
-    }
+  }
+  if (prot & PROT_MMAP) {
+    *pte |= PROT_MMAP;
   }
 
   return 0;

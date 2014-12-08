@@ -7,6 +7,7 @@ struct buf {
   struct buf *qnext; // disk queue
   uchar buf[512];
   uchar *data;
+  uchar *mmap_dst;
 };
 
 #define B_BUSY  0x1  // buffer is locked by some process

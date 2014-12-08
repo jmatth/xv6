@@ -103,8 +103,9 @@ ideintr(void)
   idequeue = b->qnext;
 
   // Read data if needed.
-  if(!(b->flags & B_DIRTY) && idewait(1) >= 0)
+  if(!(b->flags & B_DIRTY) && idewait(1) >= 0) {
     insl(0x1f0, b->data, 512/4);
+  }
   
   // Wake process waiting for this buf.
   b->flags |= B_VALID;

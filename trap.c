@@ -45,6 +45,32 @@ check_alarm(struct trapframe *tf)
   }
 }
 
+// Helper to check for and deliver SIGSEGV
+inline void
+mmap_pgflt(struct trapframe *tf, uint cr2)
+{
+  struct buf *b;
+
+  if(tf->err % 2 == 0)
+    mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_READ);
+  else
+    mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_WRITE);
+
+  while((b = bfindmmap((uchar*)uva2ka(proc->pgdir, (char*)cr2), 1)) != 0) {
+    if((b->flags & B_VALID) == 0)
+    {
+      b->data = b->mmap_dst;
+      iderw(b);
+      b->flags |= B_VALID;
+      brelse(b);
+    } else
+    {
+      b->flags |= B_DIRTY;
+      brelse(b);
+    }
+  }
+}
+
 //PAGEBREAK: 41
 void
 trap(struct trapframe *tf)
@@ -101,12 +127,7 @@ trap(struct trapframe *tf)
     }
     // was it mmaped?
     if (checkprot(proc->pgdir, rcr2(), PROT_MMAP)) {
-      struct buf *b;
-      while((b = bfindmmap((uchar*)uva2ka(proc->pgdir, (char*)rcr2()), 1)) != 0) {
-        b->flags |= B_DIRTY;
-        brelse(b);
-      }
-      mprotect(proc->pgdir, PGROUNDDOWN(rcr2()), PROT_WRITE);
+      mmap_pgflt(tf, rcr2());
     } else {
       sigrecieve(SIGSEGV, tf, rcr2(), tf->err);
     }

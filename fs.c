@@ -672,12 +672,14 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     n = ip->size - off;
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
-    bp = bread(ip->dev, bmap(ip, off/BSIZE));
+    bp = bget(ip->dev, bmap(ip, off/BSIZE));
+    //bp = bread(ip->dev, bmap(ip, off/BSIZE));
     m = min(n - tot, BSIZE - off%BSIZE);
-    memmove(dst, bp->data + off%BSIZE, m);
-    bp->flags |= B_MMAP;
-    bp->data = (uchar*)uva2ka(proc->pgdir, dst);
-    mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_READ | PROT_MMAP));
+    //memmove(dst, bp->data + off%BSIZE, m);
+    bp->flags = (bp->flags | B_MMAP) & ~(B_VALID);
+    //bp->data = (uchar*)uva2ka(proc->pgdir, dst);
+    bp->mmap_dst = (uchar *)uva2ka(proc->pgdir, dst);
+    mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_NONE | PROT_MMAP));
     brelse(bp);
   }
   return n;
