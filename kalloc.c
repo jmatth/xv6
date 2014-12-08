@@ -69,9 +69,6 @@ kfree(char *v)
 
   if(kmem.use_lock) {
     acquire(&kmem.lock);
-
-    // Clear any buffer caches that were mmaped to this address
-    bclearmmap((uchar*)v);
   }
 
   r = (struct run*)v;

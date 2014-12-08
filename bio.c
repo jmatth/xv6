@@ -138,6 +138,8 @@ void bclearmmap(uchar* v) {
       if(b->data == ptr) {
         b->flags = 0x0;
         b->data = b->buf;
+        b->dev = -1;
+        b->sector = -1;
         break;
       }
     }

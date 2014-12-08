@@ -6,6 +6,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "buf.h"
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -251,6 +252,8 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 {
   pte_t *pte;
   uint a, pa;
+  uchar *k;
+  struct buf *b;
 
   if(newsz >= oldsz)
     return oldsz;
@@ -261,6 +264,18 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     if(!pte)
       a += (NPTENTRIES - 1) * PGSIZE;
     else if((*pte & PTE_P) != 0){
+      // flush mmaped stuff
+      if(*pte & PROT_MMAP) {
+        k = (uchar*)uva2ka(pgdir, (char*)a);
+        while((b = bfindmmap((uchar*)k)) != 0) {
+          // FIXME: flush to disk if dirty
+          b->flags = 0x0 | B_BUSY;
+          b->data = b->buf;
+          b->dev = -1;
+          b->sector = -1;
+          brelse(b);
+        }
+      }
       pa = PTE_ADDR(*pte);
       if(pa == 0)
         panic("kfree");
