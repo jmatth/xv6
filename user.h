@@ -48,6 +48,6 @@ int atoi(const char*);
 void __tramp(int);
 
 //Defines for constants
-#define PROT_NONE 0
-#define PROT_READ 1
-#define PROT_WRITE 2
+#define PROT_NONE 1
+#define PROT_READ 2
+#define PROT_WRITE 4
