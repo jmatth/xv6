@@ -673,13 +673,20 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
     bp = bget(ip->dev, bmap(ip, off/BSIZE));
-    //bp = bread(ip->dev, bmap(ip, off/BSIZE));
     m = min(n - tot, BSIZE - off%BSIZE);
-    //memmove(dst, bp->data + off%BSIZE, m);
-    bp->flags = (bp->flags | B_MMAP) & ~(B_VALID);
-    //bp->data = (uchar*)uva2ka(proc->pgdir, dst);
-    bp->mmap_dst = (uchar *)uva2ka(proc->pgdir, dst);
-    mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_NONE | PROT_MMAP));
+    if(bp->mmap_count++ > 0)
+    {
+      if(!((uint)dst % PGSIZE))
+      {
+        swapmap(proc->pgdir, (uint)uva2ka(proc->pgdir, (char *)PGROUNDDOWN((uint)dst)), (uint)bp->mmap_dst, PTE_P | PTE_U | PROT_MMAP);
+        mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_READ | PROT_MMAP));
+      }
+    } else
+    {
+      bp->flags = (bp->flags | B_MMAP) & ~(B_VALID);
+      bp->mmap_dst = (uchar *)uva2ka(proc->pgdir, dst);
+      mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_NONE | PROT_MMAP));
+    }
     brelse(bp);
   }
   return n;

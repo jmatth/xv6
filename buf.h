@@ -8,6 +8,7 @@ struct buf {
   uchar buf[512];
   uchar *data;
   uchar *mmap_dst;
+  int mmap_count;
 };
 
 #define B_BUSY  0x1  // buffer is locked by some process

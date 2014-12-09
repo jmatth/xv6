@@ -61,7 +61,7 @@ binit(void)
 // Look through buffer cache for sector on device dev.
 // If not found, allocate a buffer.
 // In either case, return B_BUSY buffer.
-static struct buf*
+struct buf*
 bget(uint dev, uint sector)
 {
   struct buf *b;
@@ -91,6 +91,7 @@ bget(uint dev, uint sector)
       b->sector = sector;
       b->flags = B_BUSY;
       b->data = b->buf;
+      b->mmap_count = 0;
       release(&bcache.lock);
       return b;
     }

@@ -185,6 +185,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 int             mprotect(uint *, uint, uint);
 int             checkprot(uint *, uint, uint);
 uint*           walkpgdir(uint *pgdir, const void *va, int alloc);
+int             swapmap(uint *pgdir, uint old, uint new, int perm);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
