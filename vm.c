@@ -429,7 +429,7 @@ int swapmap(pte_t *pgdir, uint old, uint new, int perm)
   pte_t *pte = walkpgdir(pgdir, (char *)old, 0);
   if(*pte == 0)
     return -1;
-  kfree((char *)old);
+  kfree((char *)uva2ka(pgdir, (char *)old));
   *pte = 0;
   return mappages(pgdir, (char *)old, PGSIZE, v2p((void*)new), perm);
 }

@@ -678,7 +678,7 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     {
       if(!((uint)dst % PGSIZE))
       {
-        swapmap(proc->pgdir, (uint)uva2ka(proc->pgdir, (char *)PGROUNDDOWN((uint)dst)), (uint)bp->mmap_dst, PTE_P | PTE_U | PROT_MMAP);
+        swapmap(proc->pgdir,(uint) dst, (uint)bp->mmap_dst, PTE_P | PTE_U | PROT_MMAP);
         mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_READ | PROT_MMAP));
       }
     } else
