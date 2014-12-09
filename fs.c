@@ -678,8 +678,15 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     {
       if(!((uint)dst % PGSIZE))
       {
-        swapmap(proc->pgdir,(uint) dst, (uint)bp->mmap_dst, PTE_P | PTE_U | PROT_MMAP);
-        mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_READ | PROT_MMAP));
+        int perm = 0;
+        swapmap(proc->pgdir,(uint) dst, (uint)bp->mmap_dst, PTE_U);
+        if(bp->flags & B_DIRTY)
+          perm = PROT_WRITE;
+        else if(bp->data == bp->mmap_dst)
+          perm = PROT_READ;
+        else
+          perm = PROT_NONE;
+        mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(perm | PROT_MMAP));
       }
     } else
     {

@@ -17,11 +17,12 @@ int main(int argc, char *argv[])
   printf(1, "mem: 0x%x\n", mem);
   printf(1, "mem2: 0x%x\n", mem2);
 
-  fd = open("README", O_RDWR);
+  fd = open("BIGFILE", O_RDWR);
 
   mmap((void*) mem, 2*PGSIZE, PROT_READ | PROT_WRITE, 1, fd, 0);
   mmap((void*) mem2, PGSIZE, PROT_READ | PROT_WRITE, 1, fd, PGSIZE);
   printf(1, "mem2 char is '%d'\n", mem2[0]);
+  printf(1, "mem1 char is '%d'\n", mem[PGSIZE]);
 
   mem2[5] = '\0';
   printf(1, mem2);
