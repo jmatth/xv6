@@ -19,10 +19,12 @@ int main(int argc, char *argv[])
 
   fd = open("BIGFILE", O_RDWR);
 
-  mmap((void*) mem, 2*PGSIZE, PROT_READ | PROT_WRITE, 1, fd, 0);
-  mmap((void*) mem2, PGSIZE, PROT_READ | PROT_WRITE, 1, fd, PGSIZE);
+  mmap((void*) mem, 2*PGSIZE, PROT_READ, 1, fd, 0);
+  mmap((void*) mem2, PGSIZE, PROT_WRITE, 1, fd, PGSIZE);
+  mem2[513] = 'a';
   printf(1, "mem2 char is '%d'\n", mem2[0]);
   printf(1, "mem1 char is '%d'\n", mem[PGSIZE]);
+  mem[513] = 'a';
 
   mem2[5] = '\0';
   printf(1, mem2);

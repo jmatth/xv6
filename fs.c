@@ -673,6 +673,8 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
     bp = bget(ip->dev, bmap(ip, off/BSIZE));
+    if(prot == PROT_WRITE)
+      bp->flags |= B_WRITE;
     m = min(n - tot, BSIZE - off%BSIZE);
     if(bp->mmap_count++ > 0)
     {

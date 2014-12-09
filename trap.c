@@ -51,12 +51,12 @@ mmap_pgflt(struct trapframe *tf, uint cr2)
 {
   struct buf *b;
 
-  if(tf->err % 2 == 0)
-    mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_READ);
-  else
-    mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_WRITE);
+//  if(tf->err % 2 == 0)
+  mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_READ);
 
-  while((b = bfindmmap((uchar*)uva2ka(proc->pgdir, (char*)cr2), 1)) != 0) {
+  uint addr = (uint)uva2ka(proc->pgdir, (char *)cr2);
+  addr -= addr % 512; //Get to beginning of block
+  while((b = bfindmmap((uchar*)addr, 1)) != 0) {
     if((b->flags & B_VALID) == 0)
     {
       b->data = b->mmap_dst;
@@ -65,8 +65,15 @@ mmap_pgflt(struct trapframe *tf, uint cr2)
       brelse(b);
     } else
     {
+      if((b->flags & B_WRITE) == 0)
+      {
+        brelse(b);
+        sigrecieve(SIGSEGV, tf, cr2, tf->err);
+        return;
+      }
       b->flags |= B_DIRTY;
       brelse(b);
+      mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_WRITE);
     }
   }
 }
