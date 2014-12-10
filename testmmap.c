@@ -17,20 +17,30 @@ int main(int argc, char *argv[])
   printf(1, "mem: 0x%x\n", mem);
   printf(1, "mem2: 0x%x\n", mem2);
 
-  fd = open("BIGFILE", O_RDWR);
+  fd = open("NEWFILE", O_RDWR);
 
-  mmap((void*) mem, 2*PGSIZE, PROT_READ, 1, fd, 0);
-  mmap((void*) mem2, PGSIZE, PROT_WRITE, 1, fd, PGSIZE);
-  mem2[513] = 'a';
-  printf(1, "mem2 char is '%d'\n", mem2[0]);
-  printf(1, "mem1 char is '%d'\n", mem[PGSIZE]);
-  mem[513] = 'a';
+  mmap((void *)mem, PGSIZE, PROT_WRITE, 1, fd, 0);
+  //mem[0] = 'a';
+  //printf(1, "First char is %c\n", mem[0]);
 
-  mem2[5] = '\0';
-  printf(1, mem2);
-  printf(1, "\n\n");
+  //if(fork() == 0) // In child
+  //{
+  //  mmap((void*) mem, 2*PGSIZE, PROT_READ, 1, fd, 0);
+  //  sleep(100);
+  //  printf(1, "mem1 char is '%d'\n", mem[PGSIZE]);
+  //} else {
+  //  sleep(50);
+  //  mmap((void*) mem2, PGSIZE, PROT_WRITE, 1, fd, PGSIZE);
+  //  printf(1, "mem2 char is '%d'\n", mem2[0]);
+  //  wait();
+  //}
 
-  memmove(mem, "JOSH", 4);
+
+  //mem2[5] = '\0';
+  //printf(1, mem2);
+  //printf(1, "\n\n");
+
+  //memmove(mem, "JOSH", 4);
 
   //read(fd, fread, 64);
   //fread[64] = '\0';

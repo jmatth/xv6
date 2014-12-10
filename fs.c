@@ -660,16 +660,32 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
 
   ip = f->ip;
 
+  begin_op();
+  ilock(ip);
   if(ip->type == T_DEV){
     if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
+    {
+      iunlock(ip);
+      end_op();
       return -1;
+    }
+    iunlock(ip);
+    end_op();
     return devsw[ip->major].read(ip, dst, n);
   }
 
   if(off > ip->size || off + n < off)
+  {
+    iunlock(ip);
     return -1;
+  }
   if(off + n > ip->size)
-    n = ip->size - off;
+  {
+    //n = ip->size - off;
+    ip->size = off + n;
+    iupdate(ip);
+    cprintf("Updating size to %d\n", ip->size);
+  }
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
     bp = bget(ip->dev, bmap(ip, off/BSIZE));
@@ -698,5 +714,7 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     }
     brelse(bp);
   }
+  iunlock(ip);
+  end_op();
   return n;
 }

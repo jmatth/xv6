@@ -181,8 +181,8 @@ UPROGS=\
   _testmprotect\
   _testmmap\
 
-fs.img: mkfs README BIGFILE $(UPROGS)
-	./mkfs fs.img README BIGFILE $(UPROGS)
+fs.img: mkfs README NEWFILE BIGFILE $(UPROGS)
+	./mkfs fs.img README BIGFILE NEWFILE $(UPROGS)
 
 -include *.d
 
@@ -195,7 +195,7 @@ clean:
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
-PRINT = runoff.list runoff.spec README BIGFILE toc.hdr toc.ftr $(FILES)
+PRINT = runoff.list runoff.spec README BIGFILE NEWFILE toc.hdr toc.ftr $(FILES)
 
 xv6.pdf: $(PRINT)
 	./runoff
