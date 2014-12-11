@@ -713,9 +713,8 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     brelse(bp);
   }
 
-  if(off + n > ip->size)
+  if(off + n > ip->size && flags == 1)
   {
-    //n = ip->size - off;
     ip->size = off + n;
     iupdate(ip);
   }
