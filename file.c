@@ -70,26 +70,35 @@ fileclose(struct file *f)
     pte = walkpgdir(proc->pgdir, (char*)a, 0);
     if(!pte)
       a+= (NPTENTRIES - 1) * PGSIZE;
-    else if(*pte & (PROT_MMAP | PTE_P)) {
-      k = (uchar*)uva2ka(proc->pgdir, (char*)a);
-      uchar *kpgup = (uchar *)((uint)k + PGSIZE);
-      for(; k < kpgup; k += BSIZE) {
+    else if(*pte & (PROT_MMAP)) {
+      uchar *kpgdown = (uchar*)uva2ka(proc->pgdir, (char*)a);
+      uchar *kpgup = (uchar *)((uint)kpgdown + PGSIZE);
+      for(k = kpgup - BSIZE; k >= kpgdown; k -= BSIZE) {
         while((b = bfindmmap((uchar*)k, 0)) != 0) {
-          // FIXME: make this more efficient
-          if(b->flags & B_DIRTY)
-          {
-            begin_op();
-            log_write(b);
-            brelse(b);
-            end_op();
-            continue;
-          }
+          *pte &= ~PROT_MMAP;
+          *pte &= ~PTE_P;
+          *pte |= PROT_MMAPOLD;
+          if (b->mmap_count-- <= 0) {
+            if(b->flags & B_DIRTY)
+            {
+              begin_op();
+              log_write(b);
+              brelse(b);
+              end_op();
+              continue;
+            }
 
-          b->flags = 0x0 | B_BUSY;
-          b->data = b->buf;
-          b->dev = -1;
-          b->sector = -1;
-          brelse(b);
+            b->flags = 0x0 | B_BUSY;
+            b->data = b->buf;
+            b->dev = -1;
+            b->sector = -1;
+            brelse(b);
+
+            if(k == kpgdown)
+              kfree((char*)kpgdown);
+          } else {
+            brelse(b);
+          }
         }
       }
     }

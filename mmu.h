@@ -228,7 +228,8 @@ struct gatedesc {
 
 #endif
 
-#define PROT_NONE  1
-#define PROT_READ  2
-#define PROT_WRITE 4
-#define PROT_MMAP  512
+#define PROT_NONE     1
+#define PROT_READ     2
+#define PROT_WRITE    4
+#define PROT_MMAP     512
+#define PROT_MMAPOLD  1024

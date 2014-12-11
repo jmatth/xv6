@@ -454,8 +454,6 @@ sys_mmap(void)
   struct file *f;
   int offset;
 
-  cprintf("start sys_mmap\n");
-
   argint(0, (int*)&addr);
   argint(1, &length);
   argint(2, &prot);
@@ -465,6 +463,5 @@ sys_mmap(void)
 
   mmap(addr, length, prot, flags, f, offset);
 
-  cprintf("end sys_mmap\n");
   return 0;
 }

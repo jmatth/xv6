@@ -266,7 +266,8 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       if(pa == 0)
         panic("kfree");
       char *v = p2v(pa);
-      kfree(v);
+      if((*pte & PROT_MMAP) == 0)
+        kfree(v);
       *pte = 0;
     }
   }
@@ -320,7 +321,7 @@ copyuvm(pde_t *pgdir, uint sz)
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
-    if(!(*pte & PTE_P))
+    if(!(*pte & PTE_P) && !((*pte & PROT_MMAP) || (*pte & PROT_MMAPOLD)))
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
@@ -345,7 +346,7 @@ uva2ka(pde_t *pgdir, char *uva)
   pte_t *pte;
 
   pte = walkpgdir(pgdir, uva, 0);
-  if((*pte & PTE_P) == 0)
+  if((*pte & PTE_P) == 0 && (*pte & PROT_MMAP) == 0)
     return 0;
   if((*pte & PTE_U) == 0)
     return 0;
