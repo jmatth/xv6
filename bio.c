@@ -104,14 +104,15 @@ bfindmmap(uchar *addr, int need_clean)
 {
   struct buf *b;
 
-  addr = (uchar*)PGROUNDDOWN((uint)addr);
+  //addr = (uchar*)PGROUNDDOWN((uint)addr);
+  addr = (uchar *) BLKROUNDDOWN((uint) addr);
 
   acquire(&bcache.lock);
 
  loop:
   // Is the sector already cached?
   for(b = bcache.head.next; b != &bcache.head; b = b->next){
-    if(PGROUNDDOWN((uint)b->mmap_dst) == (uint)addr && (!(b->flags & B_DIRTY && need_clean)) && b->flags & B_MMAP){
+    if(BLKROUNDDOWN((uint)b->mmap_dst) == (uint)addr && (!(b->flags & B_DIRTY && need_clean)) && b->flags & B_MMAP){
       if(!(b->flags & B_BUSY)){
         b->flags |= B_BUSY;
         release(&bcache.lock);

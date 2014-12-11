@@ -8,20 +8,24 @@
 
 int main(int argc, char *argv[])
 {
-  char *mem, *mem2;
+  //char *mem, *mem2;
+  char *mem;
   //char fread[65];
   int fd;
+  int i;
 
   mem = sbrk(2*PGSIZE + PGSIZE);
-  mem2 = sbrk(PGSIZE + PGSIZE);
+  //mem2 = sbrk(PGSIZE + PGSIZE);
   printf(1, "mem: 0x%x\n", mem);
-  printf(1, "mem2: 0x%x\n", mem2);
+  //printf(1, "mem2: 0x%x\n", mem2);
 
-  fd = open("NEWFILE", O_RDWR);
+  fd = open("README", O_RDWR);
 
   mmap((void *)mem, PGSIZE, PROT_WRITE, 1, fd, 0);
-  //mem[0] = 'a';
-  //printf(1, "First char is %c\n", mem[0]);
+  for(i = 500; i < 600; i++) {
+    mem[i] = 'J';
+  }
+  printf(1, "First char is %c\n", mem[0]);
 
   //if(fork() == 0) // In child
   //{

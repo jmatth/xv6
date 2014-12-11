@@ -684,10 +684,14 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     //n = ip->size - off;
     ip->size = off + n;
     iupdate(ip);
-    cprintf("Updating size to %d\n", ip->size);
   }
 
+  uint kdst = 0;
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
+    if((uint)dst % PGSIZE == 0)
+      kdst = (uint)uva2ka(proc->pgdir, dst);
+    else
+      kdst += BSIZE;
     bp = bget(ip->dev, bmap(ip, off/BSIZE));
     if(prot == PROT_WRITE)
       bp->flags |= B_WRITE;
@@ -709,7 +713,7 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     } else
     {
       bp->flags = (bp->flags | B_MMAP) & ~(B_VALID);
-      bp->mmap_dst = (uchar *)uva2ka(proc->pgdir, dst);
+      bp->mmap_dst = (uchar *)kdst;
       mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_NONE | PROT_MMAP));
     }
     brelse(bp);

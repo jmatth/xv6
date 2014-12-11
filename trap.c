@@ -9,6 +9,7 @@
 #include "spinlock.h"
 #include "signal2.h"
 #include "buf.h"
+#include "fs.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -50,30 +51,34 @@ inline void
 mmap_pgflt(struct trapframe *tf, uint cr2)
 {
   struct buf *b;
+  uint addr, upaddr;
 
 //  if(tf->err % 2 == 0)
   mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_READ);
 
-  uint addr = (uint)uva2ka(proc->pgdir, (char *)cr2);
-  addr -= addr % 512; //Get to beginning of block
-  while((b = bfindmmap((uchar*)addr, 1)) != 0) {
-    if((b->flags & B_VALID) == 0)
-    {
-      b->data = b->mmap_dst;
-      iderw(b);
-      b->flags |= B_VALID;
-      brelse(b);
-    } else
-    {
-      if((b->flags & B_WRITE) == 0)
+  addr = (uint)uva2ka(proc->pgdir, (char *)cr2);
+  addr = PGROUNDDOWN(addr);
+  upaddr = addr + PGSIZE;
+  for(; addr < upaddr; addr += BSIZE) {
+    while((b = bfindmmap((uchar*)addr, 1)) != 0) {
+      if((b->flags & B_VALID) == 0)
       {
+        b->data = b->mmap_dst;
+        iderw(b);
+        b->flags |= B_VALID;
         brelse(b);
-        sigrecieve(SIGSEGV, tf, cr2, tf->err);
-        return;
+      } else
+      {
+        if((b->flags & B_WRITE) == 0)
+        {
+          brelse(b);
+          sigrecieve(SIGSEGV, tf, cr2, tf->err);
+          return;
+        }
+        b->flags |= B_DIRTY;
+        brelse(b);
+        mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_WRITE);
       }
-      b->flags |= B_DIRTY;
-      brelse(b);
-      mprotect(proc->pgdir, PGROUNDDOWN(cr2), PROT_WRITE);
     }
   }
 }
