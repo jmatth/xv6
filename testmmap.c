@@ -49,10 +49,8 @@ int main(int argc, char *argv[])
     mmap((void*) mem1, 2*PGSIZE, PROT_READ, 0, bigfd, 0);
     sleep(100);
     printf(1, "In other process, first char on 2nd page is '%c'\n", mem1[PGSIZE]);
-    //printf(1, "About to write to read only portion, should seg fault\n");
-    //mem1[0] = 'x';
-    close(bigfd);
-    exit();
+    printf(1, "About to write to read only portion, should seg fault\n");
+    mem1[0] = 'x';
   } else {
     sleep(50);
     printf(1, "Mapping 2nd page of BIGFILE writable\n");
@@ -60,10 +58,9 @@ int main(int argc, char *argv[])
     printf(1, "Setting first char of 2nd page to f\n");
     mem2[0] = 'f';
     wait();
+    printf(1, "Closing BIGFILE fd\n");
     close(bigfd);
   }
-
-  printf(1, "Closing BIGFILE fd\n");
 
   printf(1, "Cat README to see changes. Size should be 4096\n");
 
