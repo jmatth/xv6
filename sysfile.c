@@ -463,9 +463,7 @@ sys_mmap(void)
   argfd(4, 0, &f);
   argint(5, &offset);
 
-  begin_op();
   mmap(addr, length, prot, flags, f, offset);
-  end_op();
 
   cprintf("end sys_mmap\n");
   return 0;

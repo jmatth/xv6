@@ -61,10 +61,13 @@ mmap_pgflt(struct trapframe *tf, uint cr2)
   upaddr = addr + PGSIZE;
   for(; addr < upaddr; addr += BSIZE) {
     while((b = bfindmmap((uchar*)addr, 1)) != 0) {
-      if((b->flags & B_VALID) == 0)
+      if(b->data != b->mmap_dst)
       {
         b->data = b->mmap_dst;
-        iderw(b);
+        if((b->flags & B_VALID) == 0)
+          iderw(b);
+        else
+          memmove(b->mmap_dst, b->buf, BSIZE);
         b->flags |= B_VALID;
         brelse(b);
       } else

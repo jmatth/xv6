@@ -679,12 +679,6 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
     iunlock(ip);
     return -1;
   }
-  if(off + n > ip->size)
-  {
-    //n = ip->size - off;
-    ip->size = off + n;
-    iupdate(ip);
-  }
 
   uint kdst = 0;
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
@@ -692,6 +686,7 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
       kdst = (uint)uva2ka(proc->pgdir, dst);
     else
       kdst += BSIZE;
+
     bp = bget(ip->dev, bmap(ip, off/BSIZE));
     if(prot == PROT_WRITE)
       bp->flags |= B_WRITE;
@@ -710,14 +705,21 @@ int mmap(char *dst, int n, int prot, int flags, struct file* f, int off)
           perm = PROT_NONE;
         mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(perm | PROT_MMAP));
       }
-    } else
-    {
+    } else {
       bp->flags = (bp->flags | B_MMAP) & ~(B_VALID);
       bp->mmap_dst = (uchar *)kdst;
       mprotect(proc->pgdir, PGROUNDDOWN((uint)dst), (uint)(PROT_NONE | PROT_MMAP));
     }
     brelse(bp);
   }
+
+  if(off + n > ip->size)
+  {
+    //n = ip->size - off;
+    ip->size = off + n;
+    iupdate(ip);
+  }
+
   iunlock(ip);
   end_op();
   return n;
